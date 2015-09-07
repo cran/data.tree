@@ -1,5 +1,18 @@
+## ----echo=F--------------------------------------------------------------
+### get knitr just the way we like it
+
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE,
+  tidy = FALSE,
+  cache = FALSE
+)
+
+
 ## ------------------------------------------------------------------------
 library(data.tree)
+
 acme <- Node$new("Acme Inc.")
   accounting <- acme$AddChild("Accounting")
     software <- accounting$AddChild("New Software")
@@ -15,7 +28,101 @@ acme <- Node$new("Acme Inc.")
 print(acme)
 
 ## ------------------------------------------------------------------------
-acme$isRoot
+library(treemap)
+data(GNI2010)
+head(GNI2010)
+
+## ------------------------------------------------------------------------
+GNI2010$pathString <- paste("world", 
+                            GNI2010$continent, 
+                            GNI2010$country, 
+                            sep = "/")
+
+
+## ------------------------------------------------------------------------
+population <- as.Node(GNI2010)
+print(population, "iso3", "population", "GNI", limit = 20)
+
+## ------------------------------------------------------------------------
+library(yaml)
+yaml <- "
+name: OS Students 2014/15
+OS X:
+  Yosemite:
+    users: 16
+  Leopard:
+    users: 43
+Linux:
+  Debian:
+    users: 27
+  Ubuntu:
+    users: 36
+Windows:
+  W7:
+    users: 31
+  W8:
+    users: 32
+  W10:
+    users: 4
+"
+
+osList <- yaml.load(yaml)
+osNode <- as.Node(osList)
+print(osNode, "users")
+
+## ------------------------------------------------------------------------
+print(population, limit = 15)
+population$isRoot
+population$height
+population$count
+population$totalCount
+population$fields
+population$fieldsAll
+population$averageBranchingFactor
+
+## ------------------------------------------------------------------------
+
+sum(population$Get("population", filterFun = isLeaf))
+
+
+## ------------------------------------------------------------------------
+population$Prune(pruneFun = function(x) !x$isLeaf || x$population > 1000000)
+
+## ------------------------------------------------------------------------
+sum(population$Get("population", filterFun = isLeaf), na.rm = TRUE)
+
+## ------------------------------------------------------------------------
+popClone <- Clone(acme)
+
+
+## ------------------------------------------------------------------------
+as.data.frame(acme)
+
+## ------------------------------------------------------------------------
+ToDataFrameNetwork(acme)
+
+## ------------------------------------------------------------------------
+acme$IT$Outsource
+acme$Research$`New Labs`
+
+## ------------------------------------------------------------------------
+
+acme$children[[1]]$children[[2]]$name
+
+
+## ------------------------------------------------------------------------
+acme$Climb(position = 1, name = "New Software")$name
+
+
+## ------------------------------------------------------------------------
+tree <- CreateRegularTree(5, 5)
+tree$Climb(position = c(2, 3, 4))$path
+
+## ------------------------------------------------------------------------
+tree$Climb(position = c(2, 3), name = c("1.2.3.4", "1.2.3.4.5"))$path
+
+## ------------------------------------------------------------------------
+acme
 
 ## ------------------------------------------------------------------------
 software$cost <- 1000000
@@ -26,8 +133,6 @@ outsource$cost <- 400000
 agile$cost <- 250000
 goToR$cost <- 50000
 
-
-## ------------------------------------------------------------------------
 software$p <- 0.5
 standards$p <- 0.75
 newProductLine$p <- 0.25
@@ -35,37 +140,100 @@ newLabs$p <- 0.9
 outsource$p <- 0.2
 agile$p <- 0.05
 goToR$p <- 1
+print(acme, "cost", "p")
+
+
+## ------------------------------------------------------------------------
+NODE_RESERVED_NAMES_CONST
+
+## ------------------------------------------------------------------------
+birds <- Node$new("Aves", vulgo = "Bird")
+birds$AddChild("Neognathae", vulgo = "New Jaws", species = 10000)
+birds$AddChild("Palaeognathae", vulgo = "Old Jaws", species = 60)
+print(birds, "vulgo", "species")
+
+
+## ------------------------------------------------------------------------
+birds$species <- function(self) sum(sapply(self$children, function(x) x$species))
+print(birds, "species")
+
+
+## ------------------------------------------------------------------------
+birds$Palaeognathae$species <- 61
+print(birds, "species")
+
+## ------------------------------------------------------------------------
+
+print(acme, "cost", "p")
+
+
+## ------------------------------------------------------------------------
+SetFormat(acme, "p", formatFun = FormatPercent)
+SetFormat(acme, "cost", formatFun = function(x) FormatFixedDecimal(x, digits = 2))
+print(acme, "cost", "p")
+
+
+## ------------------------------------------------------------------------
+data.frame(cost = acme$Get("cost", format = function(x) FormatFixedDecimal(x, 2)),
+           p = acme$Get("p", format = FormatPercent))
+           
+
+
+## ------------------------------------------------------------------------
+plot(as.dendrogram(CreateRandomTree(nodes = 20)), center = TRUE)
+
+## ----echo=FALSE----------------------------------------------------------
+library(igraph, quietly = TRUE, warn.conflicts = FALSE, verbose = FALSE)
+
+## ------------------------------------------------------------------------
+library(igraph)
+plot(as.igraph(acme, directed = TRUE, direction = "climb"))
+
+## ------------------------------------------------------------------------
+library(networkD3)
+acmeNetwork <- ToDataFrameNetwork(acme, "name")
+simpleNetwork(acmeNetwork[-3], fontSize = 12)
+
+## ------------------------------------------------------------------------
+library(curl)
+#load all the presentations from useR15 in Aalborg
+url <- curl("https://raw.github.com/gluc/useR15/master/00_data/useR15.csv")
+useRdf <- read.csv(url)
+#define the hierarchy (Session/Room/Speaker)
+useRdf$pathString <- paste("useR", useRdf$session, useRdf$room, useRdf$speaker, sep="|")
+#convert to Node
+useRtree <- as.Node(useRdf, pathDelimiter = "|")
+
+#plot with networkD3
+useRtreeList <- ToListExplicit(useRtree, unname = TRUE)
+radialNetwork( useRtreeList)
 
 
 ## ------------------------------------------------------------------------
 acmedf <- as.data.frame(acme)
+as.data.frame(acme$IT)
 
-## ----, eval=FALSE--------------------------------------------------------
-#  acme$ToDataFrame()
-
-## ------------------------------------------------------------------------
-acmedf$level <- acme$Get("level")
-acmedf$cost <- acme$Get("cost")
+## ---- eval=FALSE---------------------------------------------------------
+#  ToDataFrameTree(acme)
 
 ## ------------------------------------------------------------------------
-acme$ToDataFrame("level", "cost")
-
-## ----, eval=FALSE--------------------------------------------------------
-#  print(acme, "level", "cost")
+ToDataFrameTree(acme, "level", "cost")
 
 ## ------------------------------------------------------------------------
-
-acme$ToDataFrame("level",
-                  probability = acme$Get("p", format = FormatPercent)
-                )
-                        
-
+ToDataFrameTable(acme, "pathString", "cost")
 
 ## ------------------------------------------------------------------------
-acme$ToDataFrame("level")
+ToDataFrameNetwork(acme, "cost")
 
 ## ------------------------------------------------------------------------
-data.frame(level = acme$Get('level', traversal = "post-order"))
+str(as.list(acme$IT))
+str(ToListExplicit(acme$IT, unname = FALSE, nameName = "id", childrenName = "dependencies"))
+
+## ------------------------------------------------------------------------
+print(acme, "level")
+
+## ------------------------------------------------------------------------
+acme$Get('level', traversal = "post-order")
 
 ## ------------------------------------------------------------------------
 
@@ -73,190 +241,171 @@ data.frame(level = agile$Get('level', traversal = "ancestor"))
 
 
 ## ------------------------------------------------------------------------
+acme$Get('name', pruneFun = function(x) x$position <= 2)
 
-ExpectedCost <- function(node) {
-  result <- node$cost * node$p
-  if(length(result) == 0) result <- NA
+## ------------------------------------------------------------------------
+acme$Get('name', filterFun = isLeaf)
+
+## ------------------------------------------------------------------------
+acme$Get('name')
+
+## ------------------------------------------------------------------------
+
+ExpectedCost <- function(node, adjustmentFactor = 1) {
+  return ( node$cost * node$p * adjustmentFactor)
+}
+
+acme$Get(ExpectedCost, adjustmentFactor = 0.9, filterFun = isLeaf)
+
+
+## ------------------------------------------------------------------------
+Cost <- function(node) {
+  result <- node$cost
+  if(length(result) == 0) result <- sum(sapply(node$children, Cost))
   return (result)
 }
 
-data.frame(acme$Get(ExpectedCost))
-
-
-## ------------------------------------------------------------------------
-library(magrittr)
-ExpectedCost <- function(node) {
-  result <- node$cost * node$p
-  if(length(result) == 0) {
-    if (node$isLeaf) result <- NA
-    else {
-      node$children %>% sapply(ExpectedCost) %>% sum -> result
-    }
-  }
-  return (result)
-}
-
-data.frame(ec = acme$Get(ExpectedCost))
-
+print(acme, "p", cost = Cost)
 
 ## ------------------------------------------------------------------------
 
-ExpectedCost <- function(node, fun = sum) {
-  result <- node$cost * node$p
-  if(length(result) == 0) {
-    if (node$isLeaf) result <- NA
-    else {
-      node$children %>% sapply(function(x) ExpectedCost(x, fun = fun)) %>% fun -> result
-    }
-  }
-  return (result)
-}
-
-data.frame(ec = acme$Get(ExpectedCost, fun = mean))
+acme$Do(function(node) node$cost <- Cost(node), filterFun = isNotLeaf)
+print(acme, "p", "cost")
 
 
 ## ------------------------------------------------------------------------
+acme$Set(id = 1:acme$totalCount)
 
-acme$Get(function(x) x$p * x$cost, assign = "expectedCost")
-print(acme, "p", "cost", "expectedCost")
-
-
-## ------------------------------------------------------------------------
-
-ExpectedCost <- function(node, variableName = "avgExpectedCost", fun = sum) {
-  #if the "cache" is filled, I return it. This stops the recursion
-  if(!is.null(node[[variableName]])) return (node[[variableName]])
-  
-  #otherwise, I calculate from my own properties
-  result <- node$cost * node$p
-  
-  #if the properties are not set, I calculate the mean from my children
-  if(length(result) == 0) {
-    if (node$isLeaf) result <- NA
-    else {
-      node$children %>%
-      sapply(function(x) ExpectedCost(x, variableName = variableName, fun = fun)) %>%
-      fun -> result
-    }
-  }
-  return (result)
-}
-
+print(acme, "id")
 
 ## ------------------------------------------------------------------------
+secretaries <- c(3, 2, 8)
+employees <- c(52, 43, 51)
+acme$Set(secretaries, 
+         emps = employees,
+         filterFun = function(x) x$level == 2)
+print(acme, "emps", "secretaries", "id")
 
-invisible(
-  acme$Get(ExpectedCost, fun = mean, traversal = "post-order", assign = "avgExpectedCost")
-)
-print(acme, "cost", "p", "avgExpectedCost")
-
-
-## ------------------------------------------------------------------------
-
-PrintMoney <- function(x) {
-  format(x, digits=10, nsmall=2, decimal.mark=".", big.mark="'", scientific = FALSE)
-}
-
-print(acme, cost = acme$Get("cost", format = PrintMoney))
-
-
-## ------------------------------------------------------------------------
-acme$Get("cost", format = PrintMoney, assign = "cost2")
-print(acme, cost = acme$Get("cost2"))
-
-## ------------------------------------------------------------------------
-employees <- c(NA, 52, NA, NA, 78, NA, NA, 39, NA, NA, NA)
-acme$Set(employees)
-print(acme, "employees")
-
-## ------------------------------------------------------------------------
-secretaries <- c(NA, 5, NA, NA, 6, NA, NA, 2, NA, NA, NA)
-acme$Set(secretaries, secPerEmployee = secretaries/employees)
-print(acme, "employees", "secretaries", "secPerEmployee")
-
-
-
-## ------------------------------------------------------------------------
-ec <- acme$Get(function(x) x$p * x$cost)
-acme$Set(expectedCost = ec)
-print(acme, "p", "cost", "expectedCost")
 
 
 ## ------------------------------------------------------------------------
 acme$Set(avgExpectedCost = NULL)
 
 ## ------------------------------------------------------------------------
-acme$newAttribute
+acme$fieldsAll
 
 ## ------------------------------------------------------------------------
-acme$Set(avgExpectedCost = NULL)$Set(expectedCost = NA)
-print(acme, "avgExpectedCost", "expectedCost")
+acme$Do(function(node) node$RemoveAttribute("avgExpectedCost"))
 
 ## ------------------------------------------------------------------------
-acme$Set(avgExpectedCost =NULL, expectedCost = NA)
+acme$Set(cost = c(function(self) sum(sapply(self$children, 
+                                            function(child) GetAttribute(child, "cost", format = identity)))), 
+         filterFun = isNotLeaf)
+print(acme, "cost")
+acme$IT$AddChild("Paperless", cost = 240000)
+print(acme, "cost")
 
 ## ------------------------------------------------------------------------
-acme$avgExpectedCost
-acme$expectedCost
-
-## ------------------------------------------------------------------------
-
-acme$Aggregate("cost", sum)
-
-
-## ------------------------------------------------------------------------
-acme$Get("Aggregate", "cost", sum)
-
-## ------------------------------------------------------------------------
-
-GetCost <- function(node) {
-  result <- node$cost
-  if(length(result) == 0) {
-    if (node$isLeaf) stop(paste("Cost for ", node$name, " not available!"))
-    else {
-      node$children %>% sapply(GetCost) %>% sum -> result
+traversal <- Traverse(acme, traversal = "post-order", filterFun = function(x) x$level == 2)
+Set(traversal, floor = c(1, 2, 3))
+Do(traversal, function(x) {
+    if (x$floor <= 2) {
+      x$extension <- "044"
+    } else {
+      x$extension <- "043"
     }
-  }
-  return (result)
-}
-
-acme$Get(GetCost)
+  })
+Get(traversal, "extension")
 
 
 ## ------------------------------------------------------------------------
-acme$Get(ExpectedCost, assign = "expectedCost")
-acme$Sort("expectedCost", decreasing = TRUE)
-print(acme, "expectedCost")
+Aggregate(node = acme, attribute = "cost", aggFun = sum)
+
+
+## ---- eval=FALSE---------------------------------------------------------
+#  acme$Get(Aggregate, "cost", sum)
 
 ## ------------------------------------------------------------------------
-library(R6)
-MyNode <- R6Class("MyNode",
-                    inherit = Node,
-                    lock = FALSE,
-                    
-                    #public fields and function
-                    public = list(
-                        
-                        p = NULL, 
-                        
-                        cost = NULL,
-                        
-                        AddChild = function(name) {
-                          child <- MyNode$new(name)
-                          invisible (self$AddChildNode(child))
-                        }
-                        
-                    ),
-                    
-                    #active
-                    active = list(
-                      
-                      expectedCost = function() {
-                        if ( is.null(self$p) || is.null(self$cost)) return (NULL)
-                        self$p * self$cost                    
-                      }
-                      
-                    )
-                )
+acme$Do(function(node) node$cost <- NULL, filterFun = isNotLeaf)
+Aggregate(acme, attribute = "cost", aggFun = sum, cacheAttribute = "cost") 
+print(acme, "cost")
 
+
+## ------------------------------------------------------------------------
+Cumulate(acme$IT$`Go agile`, "cost", sum)
+
+
+## ------------------------------------------------------------------------
+Cumulate(acme$IT$`Go agile`, "cost", min)
+
+
+## ------------------------------------------------------------------------
+
+acme$Do(function(node) Cumulate(node, 
+                                attribute = "cost", 
+                                aggFun = sum, 
+                                cacheAttribute = "cumCost"))
+print(acme, "cost", "cumCost")
+
+
+## ------------------------------------------------------------------------
+acmeClone <- Clone(acme)
+acmeClone$name <- "New Acme"
+# acmeClone does not point to the same reference object anymore:
+acme$name == acmeClone$name
+
+## ------------------------------------------------------------------------
+acme$Sort("name")
+acme
+acme$Sort(Aggregate, "cost", sum, decreasing = TRUE, recursive = TRUE)
+print(acme, "cost", aggCost = acme$Get(Aggregate, "cost", sum))
+
+## ------------------------------------------------------------------------
+Aggregate(acme, "cost", sum, "cost")
+acme$Prune(function(x) x$cost > 700000)
+print(acme, "cost")
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(tree <- CreateRegularTree(6, 6))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 2.499, system = 0.009, elapsed = 2.506)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(tree <- Clone(tree))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 3.704, system = 0.023, elapsed = 3.726)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(traversal <- Traverse(tree))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 0.096, system = 0.000, elapsed = 0.097)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(Set(traversal, id = 1:tree$totalCount))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 0.205, system = 0.000, elapsed = 0.204)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(ids <- Get(traversal, "id"))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 0.569, system = 0.000, elapsed = 0.569)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  leaves <- Traverse(tree, filterFun = isLeaf)
+#  Set(leaves, leafId = 1:length(leaves))
+#  system.time(Get(traversal, function(node) Aggregate(node, "leafId", max)))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 1.418, system = 0.000, elapsed = 1.417)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  system.time(tree$Get(function(node) Aggregate(tree, "leafId", max, "maxLeafId"), traversal = "post-order"))
+
+## ---- echo = FALSE-------------------------------------------------------
+c(user = 0.69, system = 0.00, elapsed = 0.69)
 

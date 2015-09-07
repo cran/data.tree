@@ -1,22 +1,24 @@
 Package: data.tree
 Type: Package
-Title: Hierarchical Data Structures
-Version: 0.1.6
-Date: 2015-04-10
+Title: General Purpose Hierarchical Data Structure
+Version: 0.2.0-3
+Date: 2015-09-07
 Author: Christoph Glur
-Maintainer: Christoph Glur <christoph.glur@ipub.ch>
+Maintainer: Christoph Glur <christoph.glur@ipub.com>
 VignetteBuilder: knitr
-Imports: R6
-Suggests: testthat, magrittr, knitr
+Imports: R6, stringr, methods
+Suggests: testthat, knitr, ape, networkD3, yaml, jsonlite, DiagrammeR,
+        igraph, treemap, curl, doParallel, foreach, htmlwidgets
+Enhances:
 Description: Create tree structures from hierarchical data, and use the utility 
-    methods to traverse the tree in various orders. Aggregate, print, convert to and from data.frame, 
-    and apply functions to your tree data. Useful for decision trees, machine learning, finance, and
-    many other applications.
+    methods to traverse the tree in various orders. Aggregate, cumulate, print, convert to and from data.frame, 
+    and apply functions to your tree data. Useful for decision trees, machine learning, finance, conversion
+    from and to JSON, and many other applications.
 License: GPL (>= 2)
 URL: http://github.com/gluc/data.tree
 BugReports: http://github.com/gluc/data.tree/issues
 Depends: R (>= 3.0)
-Packaged: 2015-04-10 11:41:56 UTC; gluc
 NeedsCompilation: no
+Packaged: 2015-09-07 05:16:10 UTC; rstudio
 Repository: CRAN
-Date/Publication: 2015-04-10 15:06:00
+Date/Publication: 2015-09-07 08:46:02

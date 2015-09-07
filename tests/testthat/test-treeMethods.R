@@ -1,31 +1,65 @@
 context("tree methods")
 
-data(acme)
 
-test_that("Find NULL", {
-  
-  expect_equal(acme$Find('X'), NULL)
-  expect_equal(acme$Find('X', 'Y', 'Z'), NULL)
-  expect_equal(acme$Find('IT', 'X'), NULL)
+
+test_that("Climb NULL", {
+  data(acme)
+  expect_equal(acme$Climb('X'), NULL)
+  expect_equal(acme$Climb('X', 'Y', 'Z'), NULL)
+  expect_equal(acme$Climb('IT', 'X'), NULL)
  
 })
 
 
-test_that("Find Equivalent", {
-  
-  expect_equal(acme$Find('IT', 'Go agile'), acme$Find('IT')$Find('Go agile'))
-  
-})
-
-test_that("Find 3rd Level", {
-  acme$Find('IT', 'Go agile')$AddChild('MyTest')$AddChild('MyTest2')
-  expect_equal("MyTest2", acme$Find('IT', 'Go agile', 'MyTest', 'MyTest2')$name )
+test_that("Climb Equivalent", {
   data(acme)
+  expect_equal(acme$Climb('IT', 'Go agile'), acme$Climb('IT')$Climb('Go agile'))
+  
 })
 
+
+
+test_that("Climb 3rd Level", {
+  data(acme)
+  acme$Climb('IT', 'Go agile')$AddChild('MyTest')$AddChild('MyTest2')
+  expect_equal("MyTest2", acme$Climb('IT', 'Go agile', 'MyTest', 'MyTest2')$name )
+  expect_equal("MyTest2", acme$Climb(c('IT', 'Go agile', 'MyTest', 'MyTest2'))$name )
+  expect_equal("MyTest2", acme$Climb(name = c('IT', 'Go agile', 'MyTest', 'MyTest2'))$name )
+  
+})
+
+
+
+test_that("Climb non-name", {
+  tree <- CreateRegularTree(5, 2)
+  p <- tree$Climb(c("1.1", "1.1.1"), position = c(2, 2))$path
+  expect_equal(c("1", "1.1", "1.1.1", "1.1.1.2", "1.1.1.2.2"), p)
+  
+})
+
+
+
+test_that("Get prune", {
+  data(acme)
+  acme$Set(myvalue = c(1.3, 1.5, 0.9, 1, 2, 1.1, 0.8, -1, 0.7, 1.0, 1.01))
+  
+  myFilter <- function(x) {
+    return (!is.null(x$myvalue) && x$myvalue > 1)
+  }
+  
+  
+  get <- acme$Get("myvalue", pruneFun = myFilter)
+  #NOTE: 1.01 is filtered out because its parent is -1!
+  exp <- c(1.3, 1.5, 2, 1.1)
+  names(exp) <- c('Acme Inc.', 'Accounting', 'Research', 'New Product Line')
+  
+  expect_equal(get, exp)
+  
+})
 
 
 test_that("Get filter", {
+  data(acme)
   acme$Set(myvalue = c(1.3, 1.5, 0.9, 1, 2, 1.1, 0.8, -1, 0.7, 1.0, 1.01))
   
   myFilter <- function(x) {
@@ -34,18 +68,18 @@ test_that("Get filter", {
   
   
   get <- acme$Get("myvalue", filterFun = myFilter)
-  #NOTE: 1.01 is filtered out because its parent is -1!
-  exp <- c(1.3, 1.5, 2, 1.1)
-  names(exp) <- c('Acme Inc.', 'Accounting', 'Research', 'New Product Line')
+  
+  exp <- c(1.3, 1.5, 2, 1.1, 1.01)
+  names(exp) <- c('Acme Inc.', 'Accounting', 'Research', 'New Product Line', 'Switch to R')
   
   expect_equal(get, exp)
-  data(acme)
   
 })
   
-  
+
 
 test_that("Get pre-order", {
+  data(acme)
   get <- acme$Get("name", traversal = "pre-order")
   
   exp <- c('Acme Inc.', 
@@ -91,7 +125,8 @@ test_that("Get post-order", {
 
 
 test_that("Get ancestor", {
-  get <- acme$Find('Research', 'New Labs')$Get("name", traversal = "ancestor")
+  data(acme)
+  get <- acme$Climb('Research', 'New Labs')$Get("name", traversal = "ancestor")
   
   exp <- c('New Labs', 
            'Research', 
@@ -107,16 +142,19 @@ test_that("Get ancestor", {
 
 test_that("Get format", {
   
+  data(acme)
+  
   calculateAggregateChildCost <- function(node, fun) {
-    if (node$isLeaf) return(node$cost)
-    fun(sapply(node$children, function(x) x$averageCost))
+    if (node$isLeaf) node$averageCost <- node$cost
+    else node$averageCost <- fun(sapply(node$children, function(x) x$averageCost))
   }
   
   myFormat <- function(x) {
     format(x, nsmall=2, scientific = FALSE)
   }
   
-  get <- acme$Get(calculateAggregateChildCost, mean, traversal = "post-order", assign = "averageCost", format = myFormat)["New Product Line"]
+  acme$Do(calculateAggregateChildCost, mean, traversal = "post-order")
+  get <- acme$Get("averageCost", format = myFormat)["New Product Line"]
   
   expect_equal(as.character(get), "2000000.00")
   
@@ -125,7 +163,9 @@ test_that("Get format", {
 
 
 
-test_that("Get assign", {
+test_that("Do", {
+  
+  data(acme)
   
   calculateAggregateChildCost <- function(node, fun) {
     if (node$isLeaf) return(node$cost)
@@ -136,7 +176,7 @@ test_that("Get assign", {
     format(x, nsmall=2, scientific = FALSE)
   }
   
-  acme$Get(calculateAggregateChildCost, mean, traversal = "post-order", assign = "averageCost", format = myFormat)
+  acme$Do(function(x) x$averageCost <- calculateAggregateChildCost(x, mean), traversal = "post-order")
   get <- acme$Get('averageCost', traversal = "post-order")["New Product Line"]
   
   
@@ -147,45 +187,450 @@ test_that("Get assign", {
 
 
 
-test_that("Get filter", {
+test_that("post-order", {
+  
+  data(acme)
+  
+  acme$Set(myval = 1:acme$totalCount, traversal = "post-order")
+  
+  expect_equal(acme$myval, 11)
+  expect_equal(acme$Climb("Research")$myval, 6)
   
 })
+
+
+test_that("level", {
+  
+  data(acme)
+  
+  acme$Set(myval = 1:acme$totalCount, traversal = "level")
+  
+  expect_equal(acme$myval, 1)
+  expect_equal(acme$Climb("Research")$myval, 3)
+  expect_equal(acme$Climb("IT", "Go agile")$myval, 10)
+  
+})
+
+
+
+test_that("level subtree", {
+  
+  data(acme)
+  it <- acme$Climb("IT")
+  
+  it$Set(myval = 1:it$totalCount, traversal = "level")
+  
+  expect_equal(it$myval, 1)
+  expect_equal(it$Climb("Outsource")$myval, 2)
+  expect_equal(it$Climb("Go agile")$myval, 3)
+  expect_equal(it$Climb("Switch to R")$myval, 4)
+  
+})
+
+
+test_that("prune", {
+  
+  data(acme)
+  
+  acme$Set(myval = 1:8, pruneFun = function(x) x$name != "Research")
+  
+  expect_equal(acme$myval, 1)
+  expect_true(is.null(acme$Climb("Research")$myval))
+  expect_true(is.null(acme$Climb("Research", "New Labs")$myval))
+  expect_equal(acme$Climb("IT", "Go agile")$myval, 7)
+  
+})
+
+
+test_that("filter", {
+  
+  data(acme)
+  
+  acme$Set(myval = 1:10, filterFun = function(x) x$name != "Research")
+  
+  expect_equal(acme$myval, 1)
+  expect_true(is.null(acme$Climb("Research")$myval))
+  expect_equal(acme$Climb("Research", "New Labs")$myval, 6)
+  expect_equal(acme$Climb("IT", "Go agile")$myval, 9)
+  
+})
+
+
+
+
+test_that("isBinary", {
+  
+  node <- Node$new("0")
+  
+  addBinChildren <- function(node, n) {
+    for (i in 1:2) {
+      child <- node$AddChild(paste0(node$name, ".", i))
+      if (n > 0) addBinChildren(child, n-1)
+    }
+  }
+  
+  addBinChildren(node, 3)
+  
+  expect_true(node$isBinary)
+  
+})
+
+
+test_that("in-order", {
+  
+  node <- Node$new("0")
+  
+  addBinChildren <- function(node, n) {
+    for (i in 1:2) {
+      child <- node$AddChild(paste0(node$name, ".", i))
+      if (n > 0) addBinChildren(child, n-1)
+    }
+  }
+  
+  addBinChildren(node, 2)
+  
+  #make sure the tree is irregular
+  addBinChildren(node$Climb("0.1", "0.1.2", "0.1.2.1"), 0)
+  
+  g <- node$Get("name", traversal = "in-order")
+  
+  expected <- c("0.1.1.1",
+                "0.1.1",
+                "0.1.1.2",
+                "0.1",
+                "0.1.2.1.1",
+                "0.1.2.1",
+                "0.1.2.1.2",
+                "0.1.2",
+                "0.1.2.2",
+                "0",
+                "0.2.1.1",
+                "0.2.1",
+                "0.2.1.2",
+                "0.2",
+                "0.2.2.1",
+                "0.2.2",
+                "0.2.2.2")
+  names(expected) <- expected
+  expect_equal(g, expected)
+  
+})
+
+
+test_that("Set recycling", {
+  
+  
+    data(acme)
+    acme$Climb("Accounting", "New Accounting Standards")$AddChild("ICI 320")
+    acme$Set(myval = 1:6)
+    expect_equal(acme$myval, 1)
+    expect_equal(acme$Climb("Research", "New Labs")$myval, 2)
+    expect_equal(acme$Climb("IT", "Go agile")$myval, 5)
+       
+})
+
+
 
 
 
 test_that("Aggregate", {
+  data(acme)
+  expect_equal(Aggregate(acme, "cost", sum), 4950000)
   
-  expect_equal(acme$Aggregate("cost", sum), 4950000)
+})
+
+
+
+
+test_that("Clone", {
+  data(acme)
+  n <- Clone(acme)
+  
+  expect_equal(class(n), class(acme))
+  expect_equal(n$name, acme$name)
+  expect_equal(n$count, acme$count)
+  expect_equal(n$totalCount, acme$totalCount)
+  expect_equal(n$Climb("IT", "Go agile")$p, acme$Climb("IT", "Go agile")$p)
+  
+  expect_equal(as.list(n), as.list(acme))
+  acme2 <- acme
+  expect_identical(acme, acme2)
+  
+  #expect_false(n, is_identical_to(acme))
+  n$name <- 'Acme2'
+  expect_false(n$name == acme$name)
+  
+})
+
+test_that("Clone formatter", {
+  data(acme)
+  SetFormat(acme, "count", FormatFixedDecimal)
+  SetFormat(acme$Climb("IT", "Outsource"), "p", FormatPercent)
+  
+  n <- Clone(acme, attributes = TRUE)
+  
+  fo <- attr(n, "formatters")[["count"]]
+  expect_equal(fo, FormatFixedDecimal)
+
+  fo2 <- attr(n$Climb("IT", "Outsource"), "formatters")[["p"]]
+  expect_equal(fo2, FormatPercent)
+  
   
 })
 
 
-test_that("Sort", {
+test_that("Clone subtree", {
+  data(acme)
+  it <- acme$Climb("IT")
+  n <- Clone(it)
   
-  acme$Get("Aggregate", "cost", sum, assign = "totalCost")
-  acme$Sort("totalCost", decreasing = FALSE)
-  get <- acme$Get('totalCost')
-  exp <- c(4950000, 700000, 50000, 250000, 400000, 1500000, 500000, 1000000, 2750000, 750000, 2000000)
-  names(exp) <- c('Acme Inc.',
-                  'IT',
-                  'Switch to R', 
-                  'Go agile',
-                  'Outsource',
-                  'Accounting',
-                  'New Accounting Standards',
-                  'New Software',
-                  'Research',
-                  'New Labs',
-                  'New Product Line'
-                  )
+  expect_equal(class(n), class(it))
+  expect_equal(n$name, it$name)
+  expect_equal(n$count, it$count)
+  expect_equal(n$totalCount, it$totalCount)
+  expect_equal(n$Climb("Go agile")$p, it$Climb("Go agile")$p)
+    
+})
+
+
+test_that("Aggregate", {
+  data(acme)
   
-  expect_equal(get, exp)
+  g <- acme$Get(Aggregate, "p", sum)
+  expect_false(is.na(g[1]))
+  expect_equal(3.65, as.vector(g[1]))  
+})
+
+
+test_that("Aggregate function", {
+  data(acme)
   
-  acme$Sort("totalCost", decreasing = TRUE)
-  get <- acme$Get('totalCost')
+  g <- acme$Get(Aggregate, function(x) x$p * x$cost, sum)
+  expect_false(is.na(g[1]))
   
-  expect_false(identical(all.equal(get, exp), TRUE))
+  expect_equal(g[[1]], sum(acme$Get(function(x) x$cost * x$p, filterFun = isLeaf)))
+
+})
+
+
+test_that("Aggregate cache", {
+  data(acme)
+  
+  s1 <- Aggregate(acme, "cost", sum)
+  expect_true(is.null(acme$cost))
+  
+  s2 <- Aggregate(acme, "cost", sum, "cost")
+  expect_equal(s2, s1)
+  expect_equal(acme$cost, s2)
+  
+})
+
+
+test_that("Aggregate cache diff", {
+  data(acme)
+
+  s2 <- Aggregate(acme, "cost", sum, "cost2")
+  expect_true(is.null(acme$cost))
+  expect_equal(acme$cost2, s2)
+  expect_equal(s2, sum(acme$Get(function(x) x$cost, filterFun = isLeaf)))
+  
+})
+
+
+test_that("Formatter Get", {
+  data(acme)
+  SetFormat(acme, "p", FormatPercent)
+  p <- acme$Get("p")
+  expect_equal(p[["Go agile"]], "5.00 %")
+})
+
+test_that("Formatter Get Hierarchy", {
+  data(acme)
+  SetFormat(acme, "p", FormatPercent)
+  acme$p <- 1
+  n <- acme$Climb("IT")
+  SetFormat(n, "p", FormatFixedDecimal)
+  p <- acme$Get("p")
+  expect_equal(p[["Acme Inc."]], "100.00 %")
+  expect_equal(p[["Outsource"]], "0.200")
+  
+  p <- acme$Get("p", format = FormatFixedDecimal)
+  expect_equal(p[["Acme Inc."]], "1.000")
+
+  p <- acme$Get("p", format = function(x) x)
+  expect_equal(p[["Acme Inc."]], 1)
+  expect_true(is.numeric(p[["Acme Inc."]]))
+  expect_equal(p[["Outsource"]], 0.2)
+  
   
   
 })
 
+
+
+test_that("Set pre-order", {
+  data(acme)
+  acme$Set(mycnt = 1:acme$totalCount)
+  expect_equal( acme$Climb("IT")$mycnt, 8)
+})
+
+
+test_that("Set post-order", {
+  data(acme)
+  acme$Set(mycnt = 1:acme$totalCount, traversal = "post-order")
+  expect_equal( acme$Climb("IT")$mycnt, 10)
+  expect_equal( acme$mycnt, 11)
+})
+
+
+test_that("Set filter", {
+  data(acme)
+  acme$Set(mycnt = 1:3, filterFun = function(x) x$level == 2)
+  expect_equal( acme$Climb("IT")$mycnt, 3)
+  expect_equal( acme$mycnt, NULL)
+})
+
+
+
+test_that("Revert", {
+  data(acme)
+  acme$Set(id = 1:acme$totalCount)
+  Revert(acme)
+  ids <- unname(acme$Get("id"))
+  expected = c(1, 8, 11, 10, 9, 5, 7, 6, 2, 4, 3)
+  expect_equal(ids, expected)
+})
+
+
+test_that("fieldsAll", {
+  data(acme)
+  fa <- acme$fieldsAll
+  expect_equal(fa, c("cost", "p"))
+  acme$Set(tta = 1:acme$totalCount)
+  expect_equal(acme$fieldsAll, c("tta", "cost", "p"))
+})
+
+
+test_that("height", {
+  data(acme)
+  expect_equal(acme$height, 3)
+  expect_equal(acme$Climb("IT")$height, 2)
+  acme$Climb("IT", "Outsource")$AddChild("New")
+  
+  expect_equal(acme$height, 4)
+})
+
+
+test_that("isRoot", {
+  data(acme)
+  expect_true(acme$isRoot)
+  expect_false(acme$Climb("IT")$isRoot)
+  expect_equal(acme$Climb("IT")$height, 2)
+  isRoot <- acme$Get("isRoot")
+  expect_equal(sum(isRoot), 1)
+  
+})
+
+
+test_that("isLeaf", {
+  data(acme)
+  expect_false(acme$isLeaf)
+  expect_true(acme$Climb("Research", "New Labs")$isLeaf)
+  
+  isLeaf <- acme$Get("isLeaf")
+  leaves <- names(isLeaf)[isLeaf]
+  exp <- c("New Software", "New Accounting Standards", "New Product Line", "New Labs", 
+           "Outsource", "Go agile", "Switch to R")
+  expect_equal(leaves, exp)
+  
+})
+
+
+
+test_that("level (active)", {
+  data(acme)
+  expect_equal(acme$level, 1)  
+  expect_equal(acme$Climb("Research")$level, 2)
+  expect_equal(acme$Climb("Research", "New Labs")$level, 3)
+  
+})
+
+
+test_that("set name Climb", {
+  data(acme)
+  rs <- acme$Climb("Research")
+  rs$name <- "Research2"
+  
+  rs2 <- acme$Climb("Research")
+  expect_true(is.null(rs2))
+  rs2 <- acme$Climb("Research2")
+  expect_true(rs2$name == "Research2")
+  expect_equal(names(rs$parent$children), c("Accounting", "Research2", "IT"))
+})
+
+
+test_that("change name", {
+  data(acme)
+#  acme$Research$name <- "Research2"
+  
+#  expect_true(is.null(acme$Research))
+
+  rs <- acme$Research
+  rs$name <- "Research2"
+  expect_true(is.null(acme$Research))
+  expect_true(acme$Research2$name == "Research2")
+})
+
+
+test_that("attribute function with formatter", {
+  data(acme)
+  SetFormat(acme, "cost", FormatFixedDecimal)
+  acme$IT$cost <- function(self) sum(sapply(self$children, function(x) x$cost))
+  mycost <- acme$Get("cost")
+  expect_equal(mycost[[8]], "700000.000")
+  
+})
+
+
+test_that("Remove Child", {
+  data(acme)
+  sw <- acme$Accounting$RemoveChild("New Software")
+  expect_equal(sw$name, "New Software")
+  expect_true(sw$isRoot)
+  expect_equal(acme$Accounting$count, 1)
+  expect_equal(names(acme$Accounting$children), c("New Accounting Standards"))
+})
+
+test_that("Remove Attribute", {
+  data(acme)
+  acme$Research$floor <- 21
+  expect_true("floor" %in% acme$Research$fields)
+  acme$Research$RemoveAttribute("floor")
+  expect_false("floor" %in% acme$Research$fields)
+})
+
+test_that("print", {
+  data(acme)
+  acme2 <- print(acme, "cost")
+  expect_equal(colnames(acme2), c("levelName", "cost"))
+})
+
+
+test_that("ClimbByAttribute", {
+  data(acme)
+  Aggregate(acme, attribute = "cost", aggFun = max, cacheAttribute = "cost")
+  n <- ClimbByAttribute(acme, cost = function(x) x$parent$cost, recursive = TRUE)
+  expect_equal(n$name, "New Product Line")
+})
+
+test_that("Cumulate", {
+  data(acme)
+  acme$Do(function(x) Aggregate(x, "cost", sum, "cost"), traversal = "post-order")
+  acme$Do(function(x) Cumulate(x, "cost", sum, "cumCost"))
+  expect_equal(unname(acme$Get("cumCost")),  c(4950000, 1500000, 1000000, 1500000, 4250000, 2000000, 2750000, 4950000, 400000, 650000, 700000))
+})
+
+test_that("averageBranchingFactor", {
+  t <- CreateRegularTree(3, 3)
+  expect_equal(t$averageBranchingFactor, 3)
+})
