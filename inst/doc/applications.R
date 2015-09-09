@@ -405,18 +405,14 @@ DiagrammeR(diagram)
 
 
 ## ------------------------------------------------------------------------
-library(jsonlite)
-library(curl)
-
-con <- curl("http://bl.ocks.org/mbostock/raw/4063269/flare.json")
-flareJSON <- paste(readLines(con, warn = FALSE), collapse = "\n")
+flarePath <- '../inst/extdata/flare.json'
+flareJSON <- readChar(flarePath, file.info(flarePath)$size)
 cat(substr(flareJSON, 1, 300))
-close(con)
 
 
 ## ------------------------------------------------------------------------
-
-flareLoL <- fromJSON("http://bl.ocks.org/mbostock/raw/4063269/flare.json",
+library(jsonlite)
+flareLoL <- fromJSON(file(flarePath),
                      simplifyDataFrame = FALSE
                      )
 
@@ -585,14 +581,18 @@ system.time(x <- sapply(1:100, function(x) FreqLastGen(GenerateChildrenTree())))
 ## ------------------------------------------------------------------------
 hist(x, probability = TRUE, main = "Frequency of feature in last generation")
 
-## ------------------------------------------------------------------------
-library(foreach)
-library(doParallel)
-registerDoParallel(makeCluster(2))
-#On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
+## ---- eval = FALSE-------------------------------------------------------
+#  library(foreach)
+#  library(doParallel)
+#  registerDoParallel(makeCluster(3))
+#  #On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
+#  
+#  system.time(x <- foreach (i = 1:100, .packages = "data.tree") %dopar% FreqLastGen(GenerateChildrenTree()))
+#  stopImplicitCluster()
 
-system.time(x <- foreach (i = 1:100, .packages = "data.tree") %dopar% FreqLastGen(GenerateChildrenTree()))
-stopImplicitCluster()
+## ---- echo = FALSE-------------------------------------------------------
+
+print(c(user = 0.07, system = 0.02, elapsed = 1.40))
 
 ## ------------------------------------------------------------------------
 
