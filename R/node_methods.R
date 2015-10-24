@@ -113,7 +113,7 @@ Aggregate = function(node,
   if (!length(v) == 0) result <- unname(v)
   else if (node$isLeaf) stop(paste0("Attribute returns NULL on leaf!"))
 
-  if (!exists("result", envir = environment()) || length(result) == 0) {
+  if (!("result" %in% ls()) || length(result) == 0) {
     values <- sapply(node$children, function(x) Aggregate(x, attribute, aggFun, cacheAttribute, ...))
     result <- unname(aggFun(values))
   }
@@ -392,16 +392,17 @@ GetAttribute <- function(node, attribute, ..., format = NULL, inheritFromAncesto
     v <- format(v)
   }
   
-  if (is.vector(v) && length(v) == 1) {
-    names(v) <- node$name 
-  } else if (length(v) > 1) {
-    if (!is.null(names(v))) nms <- names(v)
-    else nms = NULL
-    dim(v) <- c(length(v), 1)
-    colnames(v) <- node$name
-    if (!is.null(nms)) rownames(v) <- nms
-  }
-  
+  if (FALSE) {
+    if (is.vector(v) && length(v) == 1) {
+      names(v) <- node$name 
+    } else if (length(v) > 1) {
+      if (!is.null(names(v))) nms <- names(v)
+      else nms = NULL
+      dim(v) <- c(length(v), 1)
+      colnames(v) <- node$name
+      if (!is.null(nms)) rownames(v) <- nms
+    }
+  }  
   return (v)
 }
 

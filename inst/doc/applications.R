@@ -337,74 +337,6 @@ nodelabels("   ", GetPhyloNr(jl, "node"), frame = "rect")
 
 
 ## ------------------------------------------------------------------------
-
-library("DiagrammeR")
-
-jl$Set(id = letters[1:(jl$totalCount)])
-
-
-
-## ------------------------------------------------------------------------
-
-FromLabel <- function(node) {
-  if(node$parent$isRoot) return (ToLabel(node$parent))
-  return (as.character(node$parent$id))
-}
-
-EdgeLabel <- function(node) {
-  if (node$type == "decision") {
-    return ('')
-  } else if (node$type == "chance") {
-    lbl <- node$name
-  } else if (node$type == "terminal") {
-    lbl <- paste0(node$name,": ", node$p)
-  }
-  lbl <- paste0(" --> |", lbl, "|")
-  return (lbl)
-}
-
-FormatPayoff <- function(payoff) {
-  paste0("$", payoff/1000, "k")
-}
-
-ToLabel <- function(node) {
-  if (node$type == "decision") {
-    lbl <- paste0("[", FormatPayoff(node$payoff), "]")
-  } else if (node$type == "chance") {
-    lbl <- paste0("((", FormatPayoff(node$payoff), "))")
-  } else if (node$type == "terminal") {
-    lbl <- paste0("[", FormatPayoff(node$payoff), "]")
-  }
-  lbl <- paste0(" ", node$id, lbl)
-  return (lbl)
-}
-
-
-
-## ------------------------------------------------------------------------
-
-jlformat <- paste0(
-  "classDef default fill:none, bg:none, stroke-width:0px, font-size:10px;
-classDef decision fill:#9f6,stroke:#333,stroke-width:1px;
-classDef chance fill:red,stroke:#333,stroke-width:1px;
-class ", paste(jl$Get("id", filterFun = function(x) x$type == "decision"), collapse = ","), " decision;
-class ", paste(jl$Get("id", filterFun = function(x) x$type == "chance"), collapse = ","), " chance;")
-
-t <- Traverse(jl, traversal = "level", filterFun = isNotRoot)
-df <- data.frame(from = Get(t, FromLabel), edge = Get(t, EdgeLabel), to = Get(t, ToLabel))
-
-diagram <- paste("graph LR", paste( paste0(df$from, 
-                                           df$edge, 
-                                           df$to), 
-                                    collapse = "\n"), 
-                 jlformat, sep = "\n")
-
-cat(diagram)
-
-DiagrammeR(diagram)
-
-
-## ------------------------------------------------------------------------
 flarePath <- '../inst/extdata/flare.json'
 flareJSON <- readChar(flarePath, file.info(flarePath)$size)
 cat(substr(flareJSON, 1, 300))
@@ -662,7 +594,7 @@ HasWon <- function(node) {
 c(user = 345.645, system = 3.245, elapsed = 346.445)
 
 ## ---- eval = FALSE-------------------------------------------------------
-#  ttt$leafount
+#  ttt$leafCount
 
 ## ---- echo = FALSE-------------------------------------------------------
 89796
