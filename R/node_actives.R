@@ -42,7 +42,7 @@ changeName <- function(node, oldName, newName) {
   if(!node$isRoot) {
     rm(list = oldName, envir = node$parent)
     names(node$parent$children)[node$position] <- newName
-    node$parent[[newName]] <- node
+    node$parent[[as.character(newName)]] <- node
   }
   return (newName)
 }
@@ -71,7 +71,9 @@ changeName <- function(node, oldName, newName) {
 #' @export
 averageBranchingFactor <- function(node) {
   t <- Traverse(node, filterFun = isNotLeaf)
+  if (length(t) == 0) return (0)
   cnt <- Get(t, "count")
+  if (!is.numeric(cnt)) browser()
   return (mean(cnt))
 }
 

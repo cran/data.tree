@@ -62,11 +62,6 @@ print.Node <- function(x, ..., pruneMethod = c("simple", "dist", NULL), limit = 
 #' @param node the \code{Node} on which to aggregate
 #' @param aggFun the aggregation function to be applied to the children's \code{attributes}
 #' @param ... any arguments to be passed on to attribute (in case it's a function)
-#' @param cacheAttribute the name to which results should be stored, if any (NULL otherwise). If not
-#' NULL, then the function checks whether this attribute is set, and only evaluates
-#' attribute if it is not.
-#' If used wisely in connection with post-order traversal, this parameter allows to speed up calculation by breaking
-#' recursion.
 #'
 #' @inheritParams Get
 #'   
@@ -79,11 +74,6 @@ print.Node <- function(x, ..., pruneMethod = c("simple", "dist", NULL), limit = 
 #' #Aggregate using Get
 #' print(acme, "cost", minCost = acme$Get(Aggregate, "cost", min))
 #' 
-#' #use Aggregate with caching:
-#' acme$cost
-#' acme$Do(function(x) Aggregate(x, "cost", sum, cacheAttribute = "cost"), traversal = "post-order")
-#' acme$cost
-#'
 #' #use Aggregate with a function:
 #' acme$Do(function(x) x$expectedCost <- Aggregate(x, 
 #'                                                 function(x) x$cost * x$p, 
@@ -91,35 +81,24 @@ print.Node <- function(x, ..., pruneMethod = c("simple", "dist", NULL), limit = 
 #'        , traversal = "post-order")
 #'   
 #' @seealso \code{\link{Node}}
-#'
+#' 
 #' @export
 Aggregate = function(node, 
                      attribute, 
                      aggFun, 
-                     cacheAttribute = NULL,
                      ...) {
   
+  if("cacheAttribute" %in% names(list(...))) stop("cacheAttribute not supported anymore! Please use Do instead.")
   
-  
-  
-  #####
-  #if(is.function(attribute)) browser()
-  #if (!is.function(attribute)) {
-  if (length(cacheAttribute) > 0) {
-    v <- GetAttribute(node, cacheAttribute, ..., format = identity, nullAsNa = FALSE)
-    if (!length(v) == 0) return (v)
-  } 
-  v <- GetAttribute(node, attribute, ..., format = identity, nullAsNa = FALSE)
-  if (!length(v) == 0) result <- unname(v)
-  else if (node$isLeaf) stop(paste0("Attribute returns NULL on leaf!"))
+  if (isLeaf(node)) return ( GetAttribute(node, attribute, ...) )
+  values <- sapply(node$children, 
+                   function(x) {
+                     v <- GetAttribute(x, attribute, format = identity, ...)
+                     if (length(v) > 0 && !is.na(v)) return(v)
+                     Aggregate(x, attribute, aggFun, ...)
+                   })
+  result <- unname(aggFun(values))
 
-  if (!("result" %in% ls()) || length(result) == 0) {
-    values <- sapply(node$children, function(x) Aggregate(x, attribute, aggFun, cacheAttribute, ...))
-    result <- unname(aggFun(values))
-  }
-  if (length(cacheAttribute) > 0) {
-    node[[cacheAttribute]] <- result
-  }
   return (result)
 }
 
@@ -129,44 +108,37 @@ Aggregate = function(node,
 #' this \code{Node}.
 #' 
 #' @param node The node on which we want to cumulate
-#' @param cacheAttribute A field into which the results should
-#' be cached. Speeds up calculation.
 #' 
 #' @inheritParams Aggregate
 #' @inheritParams Get
 #' 
 #' @examples
 #' data(acme)
-#' acme$Do(function(x) Aggregate(x, "cost", sum, "cost"), traversal = "post-order")
-#' acme$Do(function(x) Cumulate(x, "cost", sum, "cumCost"))
+#' acme$Do(function(x) x$cost <- Aggregate(x, "cost", sum), traversal = "post-order")
+#' acme$Do(function(x) x$cumCost <- Cumulate(x, "cost", sum))
 #' print(acme, "cost", "cumCost")
 #' 
 #' @export
-Cumulate = function(node, attribute, aggFun, cacheAttribute = NULL, ...) {
+Cumulate = function(node, attribute, aggFun, ...) {
+  if ("cacheAttribute" %in% names(list(...))) stop("cacheAttribute not supported anymore! Please use Do instead.")
+  if (node$isRoot) return (GetAttribute(node, attribute, format = identity))
   pos <- node$position
-  if(length(cacheAttribute) > 0 || node$isRoot) {
-    res <- as.vector(GetAttribute(node, attribute, ..., format = identity, nullAsNa = FALSE))
-    if (pos > 1) {
-      res <- aggFun(node$parent$children[[pos - 1]][[cacheAttribute]], res)
-    }
-    node[[cacheAttribute]] <- res
-  } else {
-    nodes <- Traverse(node$parent, 
-                      pruneFun = function(x) x$level <= (node$level + 1),
-                      filterFun = function(x) x$position <= pos)
-                    
-    res <- aggFun(Get(nodes, attribute, format = identity))
-  }
+  nodes <- node$parent$children[1:pos]
+  res <- aggFun(Get(nodes, attribute, format = identity))
+  
   return (res)
 }
 
 #' Clone a tree (creates a deep copy)
 #' 
-#' The method also clones object attributes (such as the formatters). 
+#' The method also clones object attributes (such as the formatters), if desired.
+#' If the method is called on a non-root, then the parent relationship is not cloned,
+#' and the resulting \code{\link{Node}} will be a root.
 #' 
 #' @param node the root node of the tree or sub-tree to clone
-#' @param attributes if FALSE, then attributes are not cloned. This makes the method much faster.
-#' @return the clone of the tree
+#' @param attributes if FALSE, then R class attributes (e.g. formatters and grViz styles) 
+#' are not cloned. This makes the method faster.
+#' @return the clone of the tree or sub-tree
 #' 
 #' @examples
 #' data(acme)
@@ -175,25 +147,39 @@ Cumulate = function(node, attribute, aggFun, cacheAttribute = NULL, ...) {
 #' # acmeClone does not point to the same reference object anymore:
 #' acme$name
 #' 
+#' #cloning a subtree
+#' data(acme)
+#' itClone <- Clone(acme$IT)
+#' itClone$isRoot
+#' 
+#' 
 #' @inheritParams Prune
 #' 
 #' @seealso SetFormat
 #' 
 #' @export
 Clone <- function(node, pruneFun = NULL, attributes = FALSE) {
+  .Clone(node, pruneFun, attributes)
+}
+
+
+
+.Clone <- function(node, pruneFun = NULL, attributes = FALSE, firstCall = TRUE) {
 
   myclone <- node$clone()
   if (attributes) attributes(myclone) <- attributes(node)
-  if (!is.null(pruneFun)) {
+  if (!is.null(pruneFun) && length(node$children) > 0) {
     keep <- sapply(node$children, pruneFun)
     children <- node$children[keep]
     rm(list = names(node$children)[!keep], envir = myclone)
   } else children <- node$children
-  myclone$children <- lapply(children, function(x) Clone(x, pruneFun, attributes))
-  for(child in myclone$children) {
+  myclone$children <- lapply(children, function(x) .Clone(x, pruneFun, attributes, firstCall = FALSE))
+  for (child in myclone$children) {
     myclone[[child$name]] <- child
     child$parent <- myclone
   }
+  if (length(myclone$children) == 0) myclone$children <- NULL
+  if (firstCall) myclone$parent <- NULL #myclone$RemoveAttribute("parent", stopIfNotAvailable = FALSE)
   return (myclone)
 }
 
@@ -205,6 +191,10 @@ Clone <- function(node, pruneFun = NULL, attributes = FALSE) {
 #' 
 #' This method lets you climb the tree, from crutch to crutch. On each \code{Node}, the 
 #' \code{Climb} finds the first child having attribute value equal to the the provided argument.
+#' 
+#' @usage #node$Climb(...)
+#' Climb(node, ...)
+#' 
 #' 
 #' @param node The root node of the tree or subtree to climb
 #' @param ... an attribute name to searched value pairlist. For brevity, you can also provide a character vector.
@@ -271,72 +261,6 @@ Climb <- function(node, ...) {
 
 
 
-#' Find a \code{Node} by provided criteria.
-#' 
-#' 
-#' This method lets you climb the tree, from crutch to crutch. On each \code{Node}, the 
-#' \code{Climb} finds the first child having attribute value equal to the the provided argument.
-#' 
-#' @param node The root node of the tree or subtree to climb
-#' @param ... an attribute name to searched value pairlist. For brevity, you can also provide a character vector.
-#' @param recursive If TRUE, then 
-#' 
-#' @return the \code{Node} having path \code{...}, or \code{NULL} if such a path does not exist
-#' 
-#' @examples
-#' data(acme)
-#' 
-#' Aggregate(acme, attribute = "cost", aggFun = max, cacheAttribute = "cost")
-#' ClimbByAttribute(acme, cost = function(x) x$parent$cost, recursive = TRUE)
-#' 
-#'
-#' @seealso \code{\link{Node}}
-#'
-#' #@export
-ClimbByAttribute <- function(node, ..., recursive = FALSE) {
-  
-  path <- list(...)
-  if (length(path) == 0) {
-    return (node)
-  } else {
-    
-    #convert args to standard
-    #e.g. id = (3, 5), name = "myname"
-    #to
-    # id = 3, id = 5, name = "mynam"
-    # path <- list(id = c(3, 5), "myname", c("bla", "blo"))
-    # path <- list(id = 3, id = 5, name = "myname")
-    # path <- c("IT")
-    #mpath <- NULL
-    #for (i in 1:length(path)) names(path[[i]]) <- rep(names(path)[i], length(path[[i]]))
-    #for (i in 1:length(path)) mpath <- c(mpath, as.list(path[[i]]))
-    mpath <- path
-    attribute <- names(mpath)[[1]]
-    if (length(attribute) == 0 || is.na(attribute) || nchar(attribute) == 0) attribute <- "name"
-    
-    
-    value <- mpath[[1]]
-    
-    getA <- Get(node$children, attribute)
-    getV <- Get(node$children, value)
-    child <- node$children[getA == getV]
-    if(length(child) == 0) return (NULL)
-    
-    child <- child[[1]]
-    
-    if (is.null(child)) {
-      return (NULL)
-    } else if (length(mpath) == 1 && !recursive) {
-      return (child)
-    } else if (recursive) {
-      return (do.call(ClimbByAttribute, c(node = child, mpath, recursive = recursive)))
-    } else {
-      return (do.call(ClimbByAttribute, c(node = child, mpath[-1], recursive = recursive)))
-    }
-  }
-  
-}
-
 
 
 
@@ -357,13 +281,13 @@ ClimbByAttribute <- function(node, ..., recursive = FALSE) {
 GetAttribute <- function(node, attribute, ..., format = NULL, inheritFromAncestors = FALSE, nullAsNa = TRUE) {
   if (is.function(attribute)) {
     #function
-    
     v <- attribute(node, ...)
   } else if(is.character(attribute) && length(attribute) == 1) {
     #property
     v <- node[[attribute]]
     if (is.function(v)) {
-      if (names(formals(v))[[1]] == "self") v <- v(self = node, ...) #allow storing functions whose first arg is self
+      if (is.null(formals(v))) v <- v()
+      else if (names(formals(v))[[1]] == "self") v <- v(self = node, ...) #allow storing functions whose first arg is self
       else v <- v(...)
     }
   } else {
@@ -384,6 +308,7 @@ GetAttribute <- function(node, attribute, ..., format = NULL, inheritFromAncesto
   
   
   if (is.null(format) && !is.function(attribute)) {
+    #get default formatter
     format <- GetObjectAttribute(node, "formatters")[[attribute]]
   }
   
@@ -445,6 +370,9 @@ SetFormat <- function(node, name, formatFun) {
   if (length(attr(node, "formatters")) == 0) attr(node, "formatters") <- list()
   attr(node, "formatters")[[name]] <- formatFun
 }
+
+
+
 
 
 #' Test whether all node names are unique.

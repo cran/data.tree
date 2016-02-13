@@ -43,17 +43,19 @@ maxGNI <- max(sapply(n$leaves, function(x) x$GNI))
 n$Get("name", filterFun = function(x) x$isLeaf && x$GNI == maxGNI)
 
 ## ------------------------------------------------------------------------
-Aggregate(node = n, 
-          attribute = "population", 
-          aggFun = sum, 
-          cacheAttribute = "population")
+n$Do(function(x) {
+        x$population <- Aggregate(node = x,
+        attribute = "population",
+        aggFun = sum)
+        }, 
+     traversal = "post-order")
 
 ## ------------------------------------------------------------------------
 n$Sort(attribute = "population", decreasing = TRUE, recursive = TRUE)
 
 
 ## ------------------------------------------------------------------------
-n$Do(function(x) Cumulate(x, "population", sum, "cumPop"))
+n$Do(function(x) x$cumPop <- Cumulate(x, "population", sum))
 
 
 ## ------------------------------------------------------------------------
@@ -102,7 +104,8 @@ plot(as.dendrogram(n2, heightAttribute = "population"))
 
 
 ## ------------------------------------------------------------------------
-pfodf <- read.csv('../inst/extdata/portfolio.csv', stringsAsFactors = FALSE)
+fileName <- system.file("extdata", "portfolio.csv", package="data.tree")
+pfodf <- read.csv(fileName, stringsAsFactors = FALSE)
 head(pfodf)
 
 ## ------------------------------------------------------------------------
@@ -116,10 +119,11 @@ pfo <- as.Node(pfodf)
 
 
 ## ------------------------------------------------------------------------
-Aggregate(node = pfo, attribute = "Weight", aggFun = sum, cacheAttribute = "Weight")
+t <- Traverse(pfo, traversal = "post-order")
+Do(t, function(x) x$Weight <- Aggregate(node = x, attribute = "Weight", aggFun = sum))
 
 ## ------------------------------------------------------------------------
-t <- Traverse(pfo, traversal = "post-order")
+
 Do(t, function(x) x$WeightOfParent <- x$Weight / x$parent$Weight)
 
 
@@ -247,22 +251,16 @@ Predict(tree, c(color = 'red',
         )
 
 ## ------------------------------------------------------------------------
-
-fileName <- '../inst/extdata/jennylind.yaml'
+fileName <- system.file("extdata", "jennylind.yaml", package="data.tree")
 cat(readChar(fileName, file.info(fileName)$size))
 
-
-## ---- eval = FALSE-------------------------------------------------------
-#  
-#  #for debug
-#  fileName <- './inst/extdata/jennylind.yaml'
 
 ## ------------------------------------------------------------------------
 
 library(data.tree)
 library(yaml)
-l <- yaml.load_file(fileName)
-jl <- as.Node(l)
+lol <- yaml.load_file(fileName)
+jl <- as.Node(lol)
 print(jl, "type", "payoff", "p")
 
 ## ------------------------------------------------------------------------
@@ -287,64 +285,45 @@ jl$Do(decision, filterFun = function(x) x$type == 'decision')
 
 ## ------------------------------------------------------------------------
 
-library(ape)
-jl$Revert()
-jlp <- as.phylo(jl)
+GetNodeLabel <- function(node) switch(node$type, 
+                                      terminal = paste0( '$ ', format(node$payoff, scientific = FALSE, big.mark = ",")),
+                                      paste0('ER\n', '$ ', format(node$payoff, scientific = FALSE, big.mark = ",")))
 
-
-
-## ------------------------------------------------------------------------
-Nodelabel <- function(node) {
-  po <- paste0( '$ ', format(node$payoff, scientific = FALSE, big.mark = "'"))
-  if (node$type == 'terminal') return (po)
-  return ( paste0('ER\n', po) )
-}
-
-
-## ------------------------------------------------------------------------
-
-par(mar=c(1,1,1,1))
-plot(jlp, show.tip.label = FALSE, type = "cladogram")
-
-#We set arrow heads to the leaf-edges:
-
-for (node in jl$leaves) edges(GetPhyloNr(node$parent, "node"), 
-                              GetPhyloNr(node, "node"), 
-                              arrows = 2, 
-                              type = "triangle", 
-                              angle = 60)
-
-#Finally, we iterate over all the nodes and print the labels. Note that the `GetPhyloNr`
-#methods lets us map a `Node` in the data.tree to its counterpart in the phylo object.
-
-
-for(node in Traverse(jl)) {
-  if(node$type == 'decision') {
-    nodelabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = 'none', adj = c(0.3, -0.5))
-  } else if(node$type == 'chance') {
-    if (node$name == node$parent$decision) edges(GetPhyloNr(node$parent, "node"), 
-                                                 GetPhyloNr(node, "node"), col = "red")
-    nodelabels(" ", GetPhyloNr(node, "node"), frame = "circle")
-    nodelabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = 'none', adj = c(0.5, -0.5))
-    edgelabels(node$name, GetPhyloNr(node, "edge"), bg = "white")
-  } else if(node$type == 'terminal') {
-    tiplabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = "none", adj = c(0.5, -0.6))
-    edgelabels(paste0(node$name," (", node$p, ")"), GetPhyloNr(node, "edge"), bg = "white")
+GetEdgeLabel <- function(node) {
+  if (!node$isRoot && node$parent$type == 'chance') {
+    label = paste0(node$name, " (", node$p, ")")
+  } else {
+    label = node$name
   }
+  return (label)
 }
 
-nodelabels("   ", GetPhyloNr(jl, "node"), frame = "rect")
+GetNodeShape <- function(node) switch(node$type, decision = "box", chance = "circle", terminal = "none")
 
+
+SetEdgeStyle(jl, fontname = 'helvetica', label = GetEdgeLabel)
+SetNodeStyle(jl, fontname = 'helvetica', label = GetNodeLabel, shape = GetNodeShape)
 
 ## ------------------------------------------------------------------------
-flarePath <- '../inst/extdata/flare.json'
-flareJSON <- readChar(flarePath, file.info(flarePath)$size)
+jl$Do(function(x) SetEdgeStyle(x, color = "red", inherit = FALSE), 
+      filterFun = function(x) !x$isRoot && x$parent$type == "decision" && x$parent$decision == x$name)
+
+
+
+## ---- eval = FALSE-------------------------------------------------------
+#  SetGraphStyle(jl, rankdir = "LR")
+#  plot(jl)
+#  
+
+## ------------------------------------------------------------------------
+fileName <- system.file("extdata", "flare.json", package="data.tree")
+flareJSON <- readChar(fileName, file.info(fileName)$size)
 cat(substr(flareJSON, 1, 300))
 
 
 ## ------------------------------------------------------------------------
 library(jsonlite)
-flareLoL <- fromJSON(file(flarePath),
+flareLoL <- fromJSON(file(fileName),
                      simplifyDataFrame = FALSE
                      )
 

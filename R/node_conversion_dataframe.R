@@ -1,11 +1,13 @@
 #' Convert a \code{data.tree} structure to a \code{data.frame}
 #' 
+#' 
 #' @param x The root \code{Node} of the tree or sub-tree to be convert to a data.frame
 #' @param ... the attributes to be added as columns of the data.frame. See \code{\link{Get}} for details.
 #' If a specific Node does not contain the attribute, \code{NA} is added to the data.frame.
 #' @param traversal any of 'pre-order' (the default), 'post-order', 'in-order', 'level', or 'ancestor'. See \code{\link{Traverse}} for details.
 #' @param direction when converting to a network, should the edges point from root to children ("climb") or from child to parent ("descend")?
-#' @param pruneFun a function taking a \code{Node} as an argument. See \code{\link{Traverse}} for details.
+#' @param type when converting type columns, the \code{type} is the discriminator, i.e. an attribute (e.g. field name) of each node
+#' @param prefix when converting type columns, the prefix used for the column names. Can be NULL to omit prefixes.
 #' @param filterFun a function taking a \code{Node} as an argument. See \code{\link{Traverse}} for details.
 #' @param inheritFromAncestors if FALSE, and if the attribute is a field or a method, then only a \code{Node} itself is
 #' searched for the field/method. If TRUE, and if the \code{Node} does not contain the attribute, then ancestors are also searched.
@@ -23,6 +25,7 @@
 #' ToDataFrameTree(acme, "cost", "p")
 #' ToDataFrameNetwork(acme, "cost", "p", direction = "climb")
 #' ToDataFrameTable(acme, "cost", "p")
+#' ToDataFrameTypeCol(acme)
 #' 
 #' #use the pruneFun:
 #' acme$Do(function(x) x$totalCost <- Aggregate(x, "cost", sum), traversal = "post-order")
@@ -39,6 +42,18 @@
 #' acme$IT$Head <- "Mr. Squarehead"
 #' ToDataFrameTable(acme, department = function(x) x$parent$name, "name", "Head", "cost")
 #'   
+#' #complex TypeCol
+#' acme$IT$Outsource$AddChild("India")
+#' acme$IT$Outsource$AddChild("Poland")
+#' acme$Set(type = c('company', 'department', 'project', 'project', 'department', 
+#'                   'project', 'project', 'department', 'program', 'project', 
+#'                   'project', 'project', 'project'
+#'                   )
+#'         )
+#' print(acme, 'type')
+#' ToDataFrameTypeCol(acme, type = 'type')
+#'       
+#' @inheritParams Prune
 #'       
 #' @export
 as.data.frame.Node <- function(x, 
@@ -118,6 +133,8 @@ ToDataFrameTable <- function(x, ..., pruneFun = NULL) {
 #' @return ToDataFrameNetwork: a \code{data.frame}, where each row represents a \code{Node} in the tree or sub-tree 
 #' spanned by \code{x}, possibly pruned according to \code{pruneFun}. The first column is called 'from', while the
 #' second is called 'to', describing the parent to child edge (for direction "climb") or the child to parent edge (for direction "descend").
+#' If \code{\link{AreNamesUnique}} is TRUE, then the Network is
+#' based on the \code{Node$name}, otherwise on the \code{Node$pathString}
 #' 
 #' 
 #' @export
@@ -127,10 +144,11 @@ ToDataFrameNetwork <- function(x,
                                pruneFun = NULL, 
                                inheritFromAncestors = FALSE) {
   direction <- direction[1]
-  if(!AreNamesUnique(x)) stop("Names are not unique in tree! Cannot export to network.")
+  if(!AreNamesUnique(x)) GetName <- function(x) x$pathString
+  else GetName <- function(x) x$name
   t <- Traverse(x, traversal = "level", pruneFun = pruneFun)
-  children <- Get(t, function(x) x$name)
-  parents <- Get(t, function(x) x$parent$name)
+  children <- Get(t, function(x) GetName(x))
+  parents <- Get(t, function(x) GetName(x$parent))
   
   if (direction == "descend") df <- data.frame(from = children, 
                                              to = parents, 
@@ -152,6 +170,41 @@ ToDataFrameNetwork <- function(x,
 
 
 
+#' @rdname as.data.frame.Node
+#' 
+#' @return ToDataFrameTypeCol: a \code{data.frame} in table format (i.e. where each row represents a leaf in the tree or sub-tree 
+#' spanned by \code{x}), possibly pruned according to \code{pruneFun}. In addition to \code{...}, each distinc
+#' \code{type} is output to a column.
+#' 
+#' 
+#' @export
+ToDataFrameTypeCol <- function(x, 
+                               ...,
+                               type = 'level',
+                               prefix = type,
+                               pruneFun = NULL) {
+  cols <- unique(c(x$Get(type, filterFun = isNotLeaf), x$Get(type, filterFun = isLeaf)))
+
+  
+  pathArgs <- GetPathArgV(cols, type)
+  if (is.null(prefix)) names(pathArgs) <- as.character(cols)
+  else names(pathArgs) <- paste0(prefix, '_', cols)
+  do.call(ToDataFrameTable, c(x, pathArgs, ...))
+}
+
+
+GetPathArg <- function(n, type) {
+  lvl <- force(n)
+  f <- function(leaf) {
+    path <- leaf$Get(type, traversal = 'ancestor')
+    name <- names(path[path == lvl])
+    if (length(name) == 0) name <- NA
+    return (name)
+  }
+  return (f)
+}
+
+GetPathArgV <- Vectorize(GetPathArg, vectorize.args = 'n')
 
 
 
@@ -288,7 +341,6 @@ FromDataFrameTable <- function(table,
 #'  \item{Its subsequent columns contain the attributes to be set as fields on the nodes}
 #'  \item{It must contain a single root}
 #'  \item{There are no cycles in the network}
-#'  \item{Node names are unique throughout the network (and not only per level, as required by data.tree)}
 #' }
 #' 
 #' @import methods

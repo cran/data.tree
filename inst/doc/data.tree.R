@@ -111,7 +111,7 @@ acme$children[[1]]$children[[2]]$name
 
 
 ## ------------------------------------------------------------------------
-acme$Climb(position = 1, name = "New Software")$name
+acme$Climb(position = 1, name = "New Software")$path
 
 
 ## ------------------------------------------------------------------------
@@ -179,6 +179,26 @@ data.frame(cost = acme$Get("cost", format = function(x) FormatFixedDecimal(x, 2)
            
 
 
+## ---- eval = FALSE-------------------------------------------------------
+#  plot(acme)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  SetGraphStyle(acme, rankdir = "TB")
+#  SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2)
+#  SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow",
+#              fontname = "helvetica", tooltip = GetDefaultTooltip)
+#  SetNodeStyle(acme$IT, fillcolor = "LightBlue", penwidth = "5px")
+#  plot(acme)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  SetNodeStyle(acme$Accounting, inherit = FALSE, fillcolor = "Thistle",
+#               fontcolor = "Firebrick", tooltip = "This is the accounting department")
+#  plot(acme)
+
+## ---- eval = FALSE-------------------------------------------------------
+#  Do(acme$leaves, function(node) SetNodeStyle(node, shape = "egg"))
+#  plot(acme)
+
 ## ------------------------------------------------------------------------
 plot(as.dendrogram(CreateRandomTree(nodes = 20)), center = TRUE)
 
@@ -195,7 +215,8 @@ acmeNetwork <- ToDataFrameNetwork(acme, "name")
 simpleNetwork(acmeNetwork[-3], fontSize = 12)
 
 ## ------------------------------------------------------------------------
-useRdf <- read.csv('../inst/extdata/useR15.csv', stringsAsFactors = FALSE)
+fileName <- system.file("extdata", "useR15.csv", package="data.tree")
+useRdf <- read.csv(fileName, stringsAsFactors = FALSE)
 #define the hierarchy (Session/Room/Speaker)
 useRdf$pathString <- paste("useR", useRdf$session, useRdf$room, useRdf$speaker, sep="|")
 #convert to Node
@@ -223,6 +244,25 @@ ToDataFrameTable(acme, "pathString", "cost")
 ToDataFrameNetwork(acme, "cost")
 
 ## ------------------------------------------------------------------------
+ToDataFrameTypeCol(acme, 'cost')
+
+## ------------------------------------------------------------------------
+acme$IT$Outsource$AddChild("India")
+acme$IT$Outsource$AddChild("Poland")
+
+
+## ------------------------------------------------------------------------
+acme$Set(type = c('company', 'department', 'project', 'project', 'department', 'project', 'project', 'department', 'program', 'project', 'project', 'project', 'project'))
+
+
+## ------------------------------------------------------------------------
+print(acme, 'type')
+
+## ------------------------------------------------------------------------
+ToDataFrameTypeCol(acme, type = 'type', prefix = NULL)
+
+## ------------------------------------------------------------------------
+data(acme)
 str(as.list(acme$IT))
 str(ToListExplicit(acme$IT, unname = FALSE, nameName = "id", childrenName = "dependencies"))
 
@@ -323,8 +363,7 @@ Aggregate(node = acme, attribute = "cost", aggFun = sum)
 #  acme$Get(Aggregate, "cost", sum)
 
 ## ------------------------------------------------------------------------
-acme$Do(function(node) node$cost <- NULL, filterFun = isNotLeaf)
-Aggregate(acme, attribute = "cost", aggFun = sum, cacheAttribute = "cost") 
+acme$Do(function(node) node$cost <- Aggregate(node, attribute = "cost", aggFun = sum), traversal = "post-order")
 print(acme, "cost")
 
 
@@ -338,10 +377,9 @@ Cumulate(acme$IT$`Go agile`, "cost", min)
 
 ## ------------------------------------------------------------------------
 
-acme$Do(function(node) Cumulate(node, 
-                                attribute = "cost", 
-                                aggFun = sum, 
-                                cacheAttribute = "cumCost"))
+acme$Do(function(node) node$cumCost <- Cumulate(node, 
+                                                attribute = "cost", 
+                                                aggFun = sum))
 print(acme, "cost", "cumCost")
 
 
@@ -358,7 +396,7 @@ acme$Sort(Aggregate, "cost", sum, decreasing = TRUE, recursive = TRUE)
 print(acme, "cost", aggCost = acme$Get(Aggregate, "cost", sum))
 
 ## ------------------------------------------------------------------------
-Aggregate(acme, "cost", sum, "cost")
+acme$Do(function(x) x$cost <- Aggregate(x, "cost", sum))
 acme$Prune(function(x) x$cost > 700000)
 print(acme, "cost")
 

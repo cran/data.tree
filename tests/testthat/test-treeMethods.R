@@ -172,6 +172,69 @@ test_that("Get format", {
 })
 
 
+test_that("Traverse pre-order", {
+  data(acme)
+  tr <- Traverse(acme, traversal = "pre-order")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- c("Acme Inc.",
+           "Accounting",
+           "New Software",
+           "New Accounting Standards",
+           "Research",
+           "New Product Line",
+           "New Labs",
+           "IT",
+           "Outsource",
+           "Go agile",
+           "Switch to R")
+  expect_equal(nms, exp)
+  
+})
+
+
+test_that("Traverse post-order", {
+  data(acme)
+  tr <- Traverse(acme, traversal = "post-order")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- c("New Software",             "New Accounting Standards", "Accounting",               "New Product Line",        
+           "New Labs",                 "Research",                 "Outsource",                "Go agile",                
+           "Switch to R",              "IT",                       "Acme Inc."        )
+  expect_equal(nms, exp)
+  
+})
+
+
+test_that("Traverse in-order", {
+  data(acme)
+  tr <- Traverse(acme, traversal = "level")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- c("Acme Inc.",                "Accounting",               "Research",                 "IT",                      
+           "New Software",             "New Accounting Standards", "New Product Line",         "New Labs",                
+           "Outsource",                "Go agile",                 "Switch to R"        )
+  expect_equal(nms, exp)
+  
+})
+
+
+test_that("Traverse empty filter", {
+  data(acme)
+  tr <- Traverse(acme, filterFun = function(x) x$name == "Marketing")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- vector(mode = "list")
+  expect_equal(nms, exp)
+  
+})
+
+
+test_that("Traverse empty filter level", {
+  data(acme)
+  tr <- Traverse(acme, traversal = "level", filterFun = function(x) x$name == "Marketing")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- vector(mode = "list")
+  expect_equal(nms, exp)
+  
+})
+
 
 test_that("Do", {
   
@@ -392,14 +455,14 @@ test_that("Clone formatter", {
 test_that("Clone subtree", {
   data(acme)
   it <- acme$Climb("IT")
-  n <- Clone(it)
+  itcl <- Clone(it)
   
-  expect_equal(class(n), class(it))
-  expect_equal(n$name, it$name)
-  expect_equal(n$count, it$count)
-  expect_equal(n$totalCount, it$totalCount)
-  expect_equal(n$Climb("Go agile")$p, it$Climb("Go agile")$p)
-    
+  expect_equal(class(itcl), class(it))
+  expect_equal(itcl$name, it$name)
+  expect_equal(itcl$count, it$count)
+  expect_equal(itcl$totalCount, it$totalCount)
+  expect_equal(itcl$Climb("Go agile")$p, it$Climb("Go agile")$p)
+  expect_true(itcl$isRoot)
 })
 
 
@@ -423,28 +486,7 @@ test_that("Aggregate function", {
 })
 
 
-test_that("Aggregate cache", {
-  data(acme)
-  
-  s1 <- Aggregate(acme, "cost", sum)
-  expect_true(is.null(acme$cost))
-  
-  s2 <- Aggregate(acme, "cost", sum, "cost")
-  expect_equal(s2, s1)
-  expect_equal(acme$cost, s2)
-  
-})
 
-
-test_that("Aggregate cache diff", {
-  data(acme)
-
-  s2 <- Aggregate(acme, "cost", sum, "cost2")
-  expect_true(is.null(acme$cost))
-  expect_equal(acme$cost2, s2)
-  expect_equal(s2, sum(acme$Get(function(x) x$cost, filterFun = isLeaf)))
-  
-})
 
 
 test_that("Formatter Get", {
@@ -630,6 +672,25 @@ test_that("Remove Attribute", {
   expect_false("floor" %in% acme$Research$fields)
 })
 
+
+test_that("Remove Attribute stop", {
+  data(acme)
+  acme$Research$floor <- 21
+  expect_true("floor" %in% acme$Research$fields)
+  expect_true(acme$Research$RemoveAttribute("floor", FALSE))
+  expect_false("floor" %in% acme$Research$fields)
+  expect_false(acme$IT$RemoveAttribute("floor", FALSE))
+  
+})
+
+test_that("Add Sibling", {
+  data(acme)
+  acme$Research$AddSibling("Marketing")$AddChild("Web")$AddSibling("Print")
+  expect_equal(acme$Marketing$position, 3)
+  expect_equal(acme$IT$position, 4)
+  expect_equal(acme$Marketing$Web$siblings[[1]]$name, "Print")
+})
+
 test_that("print", {
   data(acme)
   acme2 <- print(acme, "cost")
@@ -637,17 +698,12 @@ test_that("print", {
 })
 
 
-test_that("ClimbByAttribute", {
-  data(acme)
-  Aggregate(acme, attribute = "cost", aggFun = max, cacheAttribute = "cost")
-  n <- ClimbByAttribute(acme, cost = function(x) x$parent$cost, recursive = TRUE)
-  expect_equal(n$name, "New Product Line")
-})
+
 
 test_that("Cumulate", {
   data(acme)
-  acme$Do(function(x) Aggregate(x, "cost", sum, "cost"), traversal = "post-order")
-  acme$Do(function(x) Cumulate(x, "cost", sum, "cumCost"))
+  acme$Do(function(x) x$cost <- Aggregate(x, "cost", sum), traversal = "post-order")
+  acme$Do(function(x) x$cumCost <- Cumulate(x, "cost", sum))
   expect_equal(unname(acme$Get("cumCost")),  c(4950000, 1500000, 1000000, 1500000, 4250000, 2000000, 2750000, 4950000, 400000, 650000, 700000))
 })
 

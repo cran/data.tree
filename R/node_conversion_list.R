@@ -58,7 +58,7 @@
 #' @export
 as.Node.list <- function(x, mode = c("simple", "explicit"), nameName = "name", childrenName = "children", nodeName = NULL, ...) {
   mode <- mode[1]
-  if (is.null(nameName) || is.null(x[[nameName]])) {
+  if (is.null(nameName) || !(nameName %in% names(x))) {
     if (length(nodeName)==0) myName <- tempfile(pattern = '', tmpdir = '')
     else myName <- nodeName
   } else {
@@ -78,7 +78,9 @@ as.Node.list <- function(x, mode = c("simple", "explicit"), nameName = "name", c
   
   #children
   if(mode == 'simple') children <- x[sapply(x, is.list)]
-  else if(mode == 'explicit') children <- x[[childrenName]]
+  else if(mode == 'explicit') {
+    children <- x[[childrenName]]
+  }
   if (length(children) == 0) return (n)
   for (i in 1:length(children)) {
     if (!is.null(names(children))) {
@@ -133,16 +135,16 @@ FromListSimple <- function(simpleList, nameName = "name", nodeName = NULL) {
 #' @param nameName The name that should be given to the name element
 #' @param childrenName The name that should be given to the children nested list
 #' @param rootName The name of the node. If provided, this overrides \code{Node$name}
-#' @param ... Additional parameters
+#' @param ... Additional parameters (ignored)
 #' 
 #' @examples
 #' data(acme)
 #' 
-#' str(ToListSimple(acme, "p", "cost"))
+#' str(ToListSimple(acme))
 #' 
-#' str(ToListExplicit(acme, "cost"))
-#' str(ToListExplicit(acme, "cost", unname = TRUE))
-#' str(ToListExplicit(acme, "cost", unname = TRUE, nameName = "id", childrenName = "descendants"))
+#' str(ToListExplicit(acme))
+#' str(ToListExplicit(acme, unname = TRUE))
+#' str(ToListExplicit(acme, unname = TRUE, nameName = "id", childrenName = "descendants"))
 #'
 #' 
 #' @export
@@ -169,7 +171,7 @@ as.list.Node <- function(x,
   fields <- self$fields
   fields <- fields[!is.function(fields) && !is.environment(fields)]
   
-  for (fieldName in fields) res[fieldName] <- self[[fieldName]]
+  for (fieldName in fields) res[[fieldName]] <- self[[fieldName]]
     
   if(!self$isLeaf) {
     kids <- lapply(self$children, FUN = function(x) as.list.Node(x, mode, unname, nameName, childrenName, ...))
@@ -190,8 +192,8 @@ as.list.Node <- function(x,
 #' @rdname as.list.Node
 #' 
 #' @export
-ToListSimple <- function(x, ..., nameName = "name") {
-  as.list.Node(x, mode = "simple", nameName = nameName, ...)
+ToListSimple <- function(x, nameName = "name") {
+  as.list.Node(x, mode = "simple", nameName = nameName)
 }
 
 
@@ -199,6 +201,6 @@ ToListSimple <- function(x, ..., nameName = "name") {
 #'  
 #'
 #' @export 
-ToListExplicit <- function(x, ..., unname = FALSE, nameName = ifelse(unname, "name", ""), childrenName = 'children') {
+ToListExplicit <- function(x, unname = FALSE, nameName = ifelse(unname, "name", ""), childrenName = 'children') {
   as.list.Node(x, mode = "explicit", unname = unname, nameName = nameName, childrenName = childrenName) 
 }

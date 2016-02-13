@@ -1,5 +1,5 @@
 ---
-title: "Sample applications using data.tree"
+title: "data.tree sample applications"
 author: "Christoph Glur"
 date: '`r Sys.Date()`'
 output:
@@ -110,13 +110,15 @@ n$Get("name", filterFun = function(x) x$isLeaf && x$GNI == maxGNI)
 
 ## Aggregate and Cumulate
 
-We aggregate the population. For non-leaves, this will recurse through children, and cache the result in the `population` field. The main reason why we do this is not to calculate the population of the world, but to store the result via the `cacheAttribute`.
+We aggregate the population. For non-leaves, this will recurse through children, and cache the result in the `population` field. 
 
 ```{r}
-Aggregate(node = n, 
-          attribute = "population", 
-          aggFun = sum, 
-          cacheAttribute = "population")
+n$Do(function(x) {
+        x$population <- Aggregate(node = x,
+        attribute = "population",
+        aggFun = sum)
+        }, 
+     traversal = "post-order")
 ```
 
 Next, we sort each node by population:
@@ -129,7 +131,7 @@ n$Sort(attribute = "population", decreasing = TRUE, recursive = TRUE)
 Finally, we cumulate among siblings, and store the running sum in an attribute called `cumPop`:
 
 ```{r}
-n$Do(function(x) Cumulate(x, "population", sum, "cumPop"))
+n$Do(function(x) x$cumPop <- Cumulate(x, "population", sum))
 
 ```
 
@@ -142,7 +144,7 @@ print(n, "population", "cumPop", pruneMethod = "dist", limit = 20)
 
 ## Prune
 
-The previous steps were done to define our threshold: big countries should be displayed, while small ones should be grouped together. This lets us define a pruning fuction that will allow a maximum of 7 countries per continent, and that will prune all countries making up less than 90% of a continent's population:
+The previous steps were done to define our threshold: big countries should be displayed, while small ones should be grouped together. This lets us define a pruning function that will allow a maximum of 7 countries per continent, and that will prune all countries making up less than 90% of a continent's population:
 
 ```{r}
 
@@ -209,7 +211,7 @@ plot(as.dendrogram(n2, heightAttribute = "population"))
 
 ## Further developments
 
-Obviously, we should also aggregate the GNI as a weighted averag. Namely, we should do this for the *Other* catch-all country that we add to the tree.
+Obviously, we should also aggregate the GNI as a weighted average. Namely, we should do this for the *Other* catch-all country that we add to the tree.
 
 # Portfolio Breakdown (finance)
 
@@ -223,7 +225,8 @@ You'll see:
 ## Convert from data.frame
 
 ```{r}
-pfodf <- read.csv('../inst/extdata/portfolio.csv', stringsAsFactors = FALSE)
+fileName <- system.file("extdata", "portfolio.csv", package="data.tree")
+pfodf <- read.csv(fileName, stringsAsFactors = FALSE)
 head(pfodf)
 ```
 
@@ -246,13 +249,14 @@ pfo <- as.Node(pfodf)
 To calculate the weight per asset class, we use the `Aggregate` method:
 
 ```{r}
-Aggregate(node = pfo, attribute = "Weight", aggFun = sum, cacheAttribute = "Weight")
+t <- Traverse(pfo, traversal = "post-order")
+Do(t, function(x) x$Weight <- Aggregate(node = x, attribute = "Weight", aggFun = sum))
 ```
 
 We now calculate the `WeightOfParent`, 
 
 ```{r}
-t <- Traverse(pfo, traversal = "post-order")
+
 Do(t, function(x) x$WeightOfParent <- x$Weight / x$parent$Weight)
 
 ```
@@ -484,16 +488,16 @@ Predict(tree, c(color = 'red',
         )
 ```
 
-Oops, trusting classification blindly might be dangerous ;-)
+Oops! Looks like trusting classification blindly might get you killed.
 
-# Jenny Lind (decision tree)
+# Jenny Lind (decision tree, plotting)
 
 This demo calculates and plots a simple decision tree. It demonstrates the following:
 
 * how to read a yaml file into a data.tree structure
 * how to calculate a decision tree
-* how to plot a data.tree with the ape package
-* how to plot a data.tree with the DiagrammeR package
+* how to plot a data.tree with the data.tree plotting facility
+
 
 ## Load YAML file
 
@@ -504,28 +508,19 @@ and systems, you can edit it with any text editor, and you can even send it as a
 This is how our YAML file looks:
 
 ```{r}
-
-fileName <- '../inst/extdata/jennylind.yaml'
+fileName <- system.file("extdata", "jennylind.yaml", package="data.tree")
 cat(readChar(fileName, file.info(fileName)$size))
 
 ```
 
 Let's convert the YAML into a data.tree structure. First, we load it with the yaml package into a list of lists. Then we use `as.Node` to convert the list into a data.tree structure:
 
-```{r, eval = FALSE}
-
-#for debug
-fileName <- './inst/extdata/jennylind.yaml'
-```
-
-
-
 ```{r}
 
 library(data.tree)
 library(yaml)
-l <- yaml.load_file(fileName)
-jl <- as.Node(l)
+lol <- yaml.load_file(fileName)
+jl <- as.Node(lol)
 print(jl, "type", "payoff", "p")
 ```
 
@@ -560,75 +555,54 @@ jl$Do(decision, filterFun = function(x) x$type == 'decision')
 
 ## Plot
 
-data.tree does not provide its own plotting facility, but there are plenty of options for plotting.
+### Plot with the data.tree plotting facility
 
-### Plot with the ape package
-
-The ape package was built to manage and plot phylogenetic trees. However, its infrastructure can also be used to plot our decision tree.
-
-First, we revert the order of the nodes in the tree (so it's displayed from top to bottom, as ape does it the other way around). Then we convert the data.tree structure to a phylo object:
+The data tree plotting facility uses GraphViz / Diagrammer. You can provide a function as a style:
 
 
 ```{r}
 
-library(ape)
-jl$Revert()
-jlp <- as.phylo(jl)
+GetNodeLabel <- function(node) switch(node$type, 
+                                      terminal = paste0( '$ ', format(node$payoff, scientific = FALSE, big.mark = ",")),
+                                      paste0('ER\n', '$ ', format(node$payoff, scientific = FALSE, big.mark = ",")))
 
-
-```
-
-Now we are ready to plot.
-
-First, we'll define a function to format the node labels. We'll use it later.
-
-```{r}
-Nodelabel <- function(node) {
-  po <- paste0( '$ ', format(node$payoff, scientific = FALSE, big.mark = "'"))
-  if (node$type == 'terminal') return (po)
-  return ( paste0('ER\n', po) )
-}
-
-```
-
-Here's the plotting:
-
-```{r}
-
-par(mar=c(1,1,1,1))
-plot(jlp, show.tip.label = FALSE, type = "cladogram")
-
-#We set arrow heads to the leaf-edges:
-
-for (node in jl$leaves) edges(GetPhyloNr(node$parent, "node"), 
-                              GetPhyloNr(node, "node"), 
-                              arrows = 2, 
-                              type = "triangle", 
-                              angle = 60)
-
-#Finally, we iterate over all the nodes and print the labels. Note that the `GetPhyloNr`
-#methods lets us map a `Node` in the data.tree to its counterpart in the phylo object.
-
-
-for(node in Traverse(jl)) {
-  if(node$type == 'decision') {
-    nodelabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = 'none', adj = c(0.3, -0.5))
-  } else if(node$type == 'chance') {
-    if (node$name == node$parent$decision) edges(GetPhyloNr(node$parent, "node"), 
-                                                 GetPhyloNr(node, "node"), col = "red")
-    nodelabels(" ", GetPhyloNr(node, "node"), frame = "circle")
-    nodelabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = 'none', adj = c(0.5, -0.5))
-    edgelabels(node$name, GetPhyloNr(node, "edge"), bg = "white")
-  } else if(node$type == 'terminal') {
-    tiplabels(Nodelabel(node), GetPhyloNr(node, "node"), frame = "none", adj = c(0.5, -0.6))
-    edgelabels(paste0(node$name," (", node$p, ")"), GetPhyloNr(node, "edge"), bg = "white")
+GetEdgeLabel <- function(node) {
+  if (!node$isRoot && node$parent$type == 'chance') {
+    label = paste0(node$name, " (", node$p, ")")
+  } else {
+    label = node$name
   }
+  return (label)
 }
 
-nodelabels("   ", GetPhyloNr(jl, "node"), frame = "rect")
+GetNodeShape <- function(node) switch(node$type, decision = "box", chance = "circle", terminal = "none")
+
+
+SetEdgeStyle(jl, fontname = 'helvetica', label = GetEdgeLabel)
+SetNodeStyle(jl, fontname = 'helvetica', label = GetNodeLabel, shape = GetNodeShape)
+``` 
+
+Note that the `fontname` is inherited as is by all children, whereas e.g. the `label` argument is a function, it's called
+on each inheriting child node.
+
+Another alternative is to set the style per node:
+
+```{r}
+jl$Do(function(x) SetEdgeStyle(x, color = "red", inherit = FALSE), 
+      filterFun = function(x) !x$isRoot && x$parent$type == "decision" && x$parent$decision == x$name)
+
 
 ```
 
+Finally, we direct our plot from left-to-right, and use the plot function to display:
+
+```{r, eval = FALSE}
+SetGraphStyle(jl, rankdir = "LR")
+plot(jl)
+
+```
+
+![acme](assets/dtree.png)
 
 # Bubble Chart (visualisation)
 
@@ -639,11 +613,11 @@ You'll learn how to convert a complex JSON into a data.frame, and how to use thi
 
 ## Load JSON file
 
-The data represents the [Flare](http://flare.prefuse.org/) class hierarchy, which is a library for creating visualizations. The JSON is long, deeply nested, and complicated.
+The data represents the [Flare](http://flare.prefuse.org/) class hierarchy, which is a code library for creating visualizations. The JSON is long, deeply nested, and complicated.
 
 ```{r}
-flarePath <- '../inst/extdata/flare.json'
-flareJSON <- readChar(flarePath, file.info(flarePath)$size)
+fileName <- system.file("extdata", "flare.json", package="data.tree")
+flareJSON <- readChar(fileName, file.info(fileName)$size)
 cat(substr(flareJSON, 1, 300))
 
 ```
@@ -652,7 +626,7 @@ So, let's convert it into a data.tree structure:
 
 ```{r}
 library(jsonlite)
-flareLoL <- fromJSON(file(flarePath),
+flareLoL <- fromJSON(file(fileName),
                      simplifyDataFrame = FALSE
                      )
 

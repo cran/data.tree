@@ -17,7 +17,7 @@
 #' @seealso formatC
 #' @export
 FormatPercent <- function(x, digits = 2, format = "f", ...) {
-  ifelse(is.na(x), "", paste(formatC(100 * x, format = format, digits = digits, ...), "%"))
+  ifelse(is.null(x) || is.na(x), "", paste(formatC(100 * x, format = format, digits = digits, ...), "%"))
 }
 
 #' Format a Number as a Decimal
@@ -34,29 +34,29 @@ FormatPercent <- function(x, digits = 2, format = "f", ...) {
 #' 
 #' @export
 FormatFixedDecimal <- function(x, digits = 3) {
-  ifelse(is.na(x), "", sprintf(paste0("%.",digits, "f"),x))
+  ifelse(is.null(x) || is.na(x), "", sprintf(paste0("%.",digits, "f"),x))
 }
 
 
 
 
 
-#'   Calculates the height of a \code{Node} given the hight of the root.
+#' Calculates the height of a \code{Node} given the height of the root.
+#' 
+#' This function puts leafs at the bottom (not hanging), and makes edges equally long.
+#' Useful for easy plotting with third-party packages, e.g. if you have no specific height 
+#' attribute, e.g. with \code{\link{as.dendrogram.Node}}, \code{\link{ToNewick}}, 
+#' and \code{\link{as.phylo.Node}}
 #'   
-#'   This function puts leafs at the bottom (not hanging), and makes edges equally long.
-#'   Useful for easy plotting with third-party packages, e.g. if you have no specific height 
-#'   attribute, e.g. with #'   \code{\link{as.dendrogram.Node}}, \code{\link{ToNewick}}, 
-#'   and \code{\link{as.phylo.Node}}
+#' @param node The node
+#' @param rootHeight The height of the root
 #'   
-#'   @param node The node
-#'   @param rootHeight The height of the root
+#' @examples
+#' data(acme)
+#' dacme <- as.dendrogram(acme, heightAttribute = function(x) DefaultPlotHeight(x, 200))
+#' plot(dacme, center = TRUE)
 #'   
-#'   @examples
-#'   data(acme)
-#'   dacme <- as.dendrogram(acme, heightAttribute = function(x) DefaultPlotHeight(x, 200))
-#'   plot(dacme, center = TRUE)
-#'   
-#'   @export
+#' @export
 DefaultPlotHeight <- function(node, rootHeight = 100) {
   if (node$isRoot) return ( rootHeight )
   if (node$isLeaf) return ( 0 )
@@ -128,7 +128,7 @@ PrintPruneSimple <- function(x, limit) {
        traversal = "post-order"
   )
   
-  xc <- Clone(x, pruneFun = function(x) x$.id < limit)
+  xc <- Clone(x, pruneFun = function(x) x$.id < limit, attributes = TRUE)
   
   xc$Do(function(x) {
           if(x$count < x$.originalCount) {
@@ -187,7 +187,7 @@ PrintPruneDist <- function(x, limit) {
   
   Set(t, .keep = keep)
   #sapply(t, function(x) paste(x$.height, x$.level, x$name, sep = "."))
-  xc <- Clone(x, pruneFun = function(x) x$.keep)
+  xc <- Clone(x, pruneFun = function(x) x$.keep, attributes = TRUE)
   
   t <- Traverse(xc)
   
@@ -203,3 +203,18 @@ PrintPruneDist <- function(x, limit) {
   
 }
 
+
+
+#' @rdname ToGraphViz
+#' @export
+GetDefaultTooltip <- function(node) {
+  
+  
+  if (length(node$fields) > 0) {
+    myfields <- node$fields  
+  } else {
+    myfields <- "name"
+  }
+  tt <- paste(sapply(myfields, function(x) paste0("- ", x, ": ", GetAttribute(node, x))), collapse = "\n")
+  return (tt)
+}
