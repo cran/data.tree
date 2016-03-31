@@ -39,6 +39,23 @@ test_that("Climb non-name", {
 
 
 
+
+test_that("Find", {
+  
+  data(acme)
+  os <- acme$FindNode("Outsource")
+  expect_equal(os$name, "Outsource")
+  
+  os <- acme$FindNode("XYZ")
+  expect_null(os)
+  
+  acme$Accounting$AddChild("Outsource")
+  os <- acme$FindNode("Outsource")
+  expect_equal(class(os), c("Node", "R6"))
+  expect_equal(os$name, "Outsource")
+
+})
+
 test_that("Get prune", {
   data(acme)
   acme$Set(myvalue = c(1.3, 1.5, 0.9, 1, 2, 1.1, 0.8, -1, 0.7, 1.0, 1.01))
@@ -719,5 +736,24 @@ test_that("siblings", {
   expect_equal(2, length(s))
   nms <- unname(Get(s, "name"))
   expect_equal(c("Accounting", "Research"), nms)
+  
+})
+
+
+test_that("leaves", {
+  data(acme)
+  l <- acme$leaves
+  expect_equal(7, length(l))
+  expect_equal(unname(sapply(l, function(x) x$name)), c("New Software",
+                                                        "New Accounting Standards",
+                                                        "New Product Line",
+                                                        "New Labs",         
+                                                        "Outsource",
+                                                        "Go agile",
+                                                        "Switch to R"))            
+
+  l <- acme$IT$Outsource$leaves
+  expect_equal(typeof(l), "list")
+  expect_equal(length(l), 1)
   
 })

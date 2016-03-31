@@ -121,7 +121,7 @@ test_that("as.list.Node unname", {
   
 })
 
-test_that("as.Node.list unname", {
+test_that("as.Node.list unname with mode = simple", {
   
   l <- as.list(acme, unname = TRUE, nameName = 'id', childrenName = 'sub')
   n <- as.Node(l, nameName = 'id', childrenName = 'sub')
@@ -132,5 +132,97 @@ test_that("as.Node.list unname", {
   expect_equal(0.05, n$Climb("IT", "Go agile")$p)
   
 })
+
+
+test_that("as.Node.list auto", {
+  
+  lol <- list(type = "Root", list(type = "Rule", value = 1), list(type = "Rule", value = 2))
+  tree <- FromListSimple(lol, nameName = NULL, nodeName = 1)
+  
+  expect_equal(tree$totalCount, 3)
+  expect_equal(unname(tree$Get("name")), as.character(c(1, 1, 2)))
+  expect_equal(tree$children[[1]]$type, "Rule")
+  
+})
+
+
+test_that("as.Node.list warning", {
+  
+  lol <- list(type = "Root", list(type = "Rule", count = 1), list(type = "Rule", count = 2))
+  #tree <- FromListSimple(lol, nameName = NULL, nodeName = 1)
+  tree <- NULL
+  expect_that(FromListSimple(lol, nameName = NULL, nodeName = 1, warn = FALSE), not(gives_warning()))
+  expect_that(tree <- FromListSimple(lol, nameName = NULL, nodeName = 1), gives_warning())
+  
+  expect_equal(tree$totalCount, 3)
+  expect_equal(unname(tree$Get("name")), as.character(c(1, 1, 2)))
+  
+  expect_equal(unname(tree$Get("count")), c(2,0,0))
+  expect_equal(unname(tree$Get("count2")), c(NA, 1, 2))
+  
+})
+
+
+
+test_that("as.Node.list string", {
+  
+  
+  
+  
+  yaml <- "
+children:
+  CR:
+    description: Currencies
+    type: Currency
+    children:
+      CR_CHF: market
+      CR_EUR: market
+      CR_USD: market
+"
+  
+  lol <- yaml::yaml.load(yaml)
+  
+  tree <- FromListExplicit(lol)
+  expect_equal(tree$totalCount, 5)
+  expect_equal(tree$height, 3)
+  expect_equal(tree$CR$CR_CHF$name, "CR_CHF")
+  
+  #market is lost:
+  expect_equal(tree$fieldsAll, c("description", "type"))
+  
+  
+  
+})
+
+
+
+test_that("as.Node.list string 2", {
+  
+
+  yaml <- "
+children:
+  CR:
+    description: Currencies
+    type: Currency
+    children:
+      - CR_CHF
+      - CR_EUR
+      - CR_USD
+"
+  
+  lol <- yaml::yaml.load(yaml)
+  
+  tree <- FromListExplicit(lol)
+  expect_equal(tree$totalCount, 5)
+  expect_equal(tree$height, 3)
+  expect_equal(tree$CR$CR_CHF$name, "CR_CHF")
+  
+  
+  
+})
+
+
+
+
 
 

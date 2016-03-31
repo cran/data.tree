@@ -12,8 +12,8 @@ knitr::opts_chunk$set(
 
 ## ------------------------------------------------------------------------
 library(treemap)
-data(GNI2010)
-treemap(GNI2010,
+data(GNI2014)
+treemap(GNI2014,
        index=c("continent", "iso3"),
        vSize="population",
        vColor="GNI",
@@ -21,29 +21,30 @@ treemap(GNI2010,
 
 ## ------------------------------------------------------------------------
 library(data.tree)
-GNI2010$pathString <- paste("world", GNI2010$continent, GNI2010$country, sep = "/")
-n <- as.Node(GNI2010[,])
-print(n, pruneMethod = "dist", limit = 20)
+GNI2014$continent <- as.character(GNI2014$continent)
+GNI2014$pathString <- paste("world", GNI2014$continent, GNI2014$country, sep = "/")
+tree <- as.Node(GNI2014[,])
+print(tree, pruneMethod = "dist", limit = 20)
 
 ## ------------------------------------------------------------------------
 
-n$Europe$Switzerland$population
+tree$Europe$Switzerland$population
 
 
 ## ------------------------------------------------------------------------
-northAm <- n$`North America`
+northAm <- tree$`North America`
 northAm$Sort("GNI", decreasing = TRUE)
 print(northAm, "iso3", "population", "GNI", limit = 12)
 
 ## ------------------------------------------------------------------------
-maxGNI <- Aggregate(n, "GNI", max)
+maxGNI <- Aggregate(tree, "GNI", max)
 #same thing, in a more traditional way:
-maxGNI <- max(sapply(n$leaves, function(x) x$GNI))
+maxGNI <- max(sapply(tree$leaves, function(x) x$GNI))
 
-n$Get("name", filterFun = function(x) x$isLeaf && x$GNI == maxGNI)
+tree$Get("name", filterFun = function(x) x$isLeaf && x$GNI == maxGNI)
 
 ## ------------------------------------------------------------------------
-n$Do(function(x) {
+tree$Do(function(x) {
         x$population <- Aggregate(node = x,
         attribute = "population",
         aggFun = sum)
@@ -51,15 +52,20 @@ n$Do(function(x) {
      traversal = "post-order")
 
 ## ------------------------------------------------------------------------
-n$Sort(attribute = "population", decreasing = TRUE, recursive = TRUE)
+tree$Sort(attribute = "population", decreasing = TRUE, recursive = TRUE)
 
 
 ## ------------------------------------------------------------------------
-n$Do(function(x) x$cumPop <- Cumulate(x, "population", sum))
+tree$Do(function(x) x$cumPop <- Cumulate(x, "population", sum))
 
 
 ## ------------------------------------------------------------------------
-print(n, "population", "cumPop", pruneMethod = "dist", limit = 20)
+print(tree, "population", "cumPop", pruneMethod = "dist", limit = 20)
+
+## ------------------------------------------------------------------------
+
+tree$Do(function(x) x$origCount <- x$count)
+
 
 ## ------------------------------------------------------------------------
 
@@ -71,15 +77,15 @@ myPruneFun <- function(x, cutoff = 0.9, maxCountries = 7) {
 
 
 ## ------------------------------------------------------------------------
-n2 <- Clone(n, pruneFun = myPruneFun)
-print(n2$Oceania, "population", pruneMethod = "simple", limit = 20)
+treeClone <- Clone(tree, pruneFun = myPruneFun)
+print(treeClone$Oceania, "population", pruneMethod = "simple", limit = 20)
 
 ## ------------------------------------------------------------------------
 
-n2$Do(function(x) {
+treeClone$Do(function(x) {
   missing <- x$population - sum(sapply(x$children, function(x) x$population))
   other <- x$AddChild("Other")
-  other$iso3 <- "OTH"
+  other$iso3 <- paste0("OTH(", x$origCount, ")")
   other$country <- "Other"
   other$continent <- x$name
   other$GNI <- 0
@@ -89,8 +95,11 @@ filterFun = function(x) x$level == 2
 )
 
 
+print(treeClone$Oceania, "population", pruneMethod = "simple", limit = 20)
+
+
 ## ------------------------------------------------------------------------
-df <- ToDataFrameTable(n2, "iso3", "country", "continent", "population", "GNI")
+df <- ToDataFrameTable(treeClone, "iso3", "country", "continent", "population", "GNI")
 
 treemap(df,
         index=c("continent", "iso3"),
@@ -100,7 +109,7 @@ treemap(df,
 
 
 ## ------------------------------------------------------------------------
-plot(as.dendrogram(n2, heightAttribute = "population"))
+plot(as.dendrogram(treeClone, heightAttribute = "population"))
 
 
 ## ------------------------------------------------------------------------

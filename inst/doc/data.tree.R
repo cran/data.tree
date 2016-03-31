@@ -29,18 +29,18 @@ print(acme)
 
 ## ------------------------------------------------------------------------
 library(treemap)
-data(GNI2010)
-head(GNI2010)
+data(GNI2014)
+head(GNI2014)
 
 ## ------------------------------------------------------------------------
-GNI2010$pathString <- paste("world", 
-                            GNI2010$continent, 
-                            GNI2010$country, 
+GNI2014$pathString <- paste("world", 
+                            GNI2014$continent, 
+                            GNI2014$country, 
                             sep = "/")
 
 
 ## ------------------------------------------------------------------------
-population <- as.Node(GNI2010)
+population <- as.Node(GNI2014)
 print(population, "iso3", "population", "GNI", limit = 20)
 
 ## ------------------------------------------------------------------------

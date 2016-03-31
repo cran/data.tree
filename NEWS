@@ -1,6 +1,30 @@
 # All changes to data.tree are documented here.
 
-## Version 0.3.0
+## Version 0.3.5
+- FIX: minor correction in documentation
+
+## Version 0.3.4
+- FIX: minor correction in documentation
+
+## Version 0.3.3
+- CHANGE: Renamed Find method to FindNode, in order to avoid masking from base
+- FIX: upgrade to latest version of treemap package
+- FIX: a few typos in documentation
+
+
+## Version 0.3.2
+- ADD: FromListExplicit now interprets character vectors as a list of nodes (#58)
+
+
+## Version 0.3.1
+- IMPROVE: as.list.Node 
+  - now generates auto name if unique name is not available (#54)
+  - now has warn arg, warning if source data contains reserved names
+  - now also imports fiels with names equal to reserved names (e.g. count), they will be renamed (to e.g. count2)
+- CHANGE: node$leaves now returns a list even when called on a leaf itself
+- ADD: Find method to find a single Node in a (sub-)tree (#52)
+
+## Version 0.3.0 Pine Tree
 - REMOVE: Removed the cacheAttribute parameter from Aggregate and Cumulate (they were confusing, even to me. Use Do instead to manually store aggregate values in the tree)
 - ADD: plot function (see ?plot.Node)
 - ADD: ToDataFrameTypeCol to export e.g. the path to columns by level in columns: ToDataFrameTypeCol(acme)
