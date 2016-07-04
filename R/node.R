@@ -12,6 +12,7 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
                                 'averageBranchingFactor',
                                 'children',
                                 'Climb',
+                                'Navigate',
                                 'FindNode',
                                 'clone',
                                 'count',
@@ -77,6 +78,7 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 #'   \item{\code{RemoveChild(name)}}{Remove the child \code{Node} called \code{name} from a \code{Node} and returns it.}
 #'   \item{\code{RemoveAttribute(name, stopIfNotAvailable)}}{Removes attribute called \code{name} from this \code{Node}. Gives an error if \code{stopIfNotAvailable} and the attribute doesn't exist.}
 #'   \item{\code{\link{Climb}(...)}}{Find a node with path \code{...}, where the \code{...} arguments are the \code{name}s of the \code{Node}s, or other field values.}
+#'   \item{\code{\link{Navigate}(path)}}{Find a node by relative \code{path}}
 #'   \item{\code{\link{FindNode}(name)}}{Find a node with name \code{name}. Especially useful if \code{\link{AreNamesUnique}} is \code{TRUE}}
 #'   \item{\code{\link{Get}(attribute, ..., traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"), pruneFun = NULL, filterFun = NULL, format = NULL, inheritFromAncestors = FALSE, simplify = c(TRUE, FALSE, "array", "regular"))}}{Traverses the tree and collects values along the way.}
 #'   \item{\code{\link{Do}(fun, ..., traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"), pruneFun = NULL, filterFun = NUL)}}{Traverses the tree and call fun on each node.}
@@ -87,10 +89,13 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 #'
 #' }
 #' 
-#' @section Properties:
+#' @section Actives (aka Properties):
 #'   
 #' \describe{
 #'  \item{\code{name}}{Gets or sets the name of a \code{Node}. For example \code{Node$name <- "Acme"}}
+#'  \item{\code{parent}}{Gets or sets the parent \code{Node} of a \code{Node}. Only set this if you know what you are doing, as you might mess up the tree structure!}
+#'  \item{\code{children}}{Gets or sets the children \code{list} of a \code{Node}. Only set this if you know what you are doing, as you might mess up the tree structure!}
+#'  \item{\code{siblings}}{Returns a list of the siblings of this \code{Node}}
 #'  \item{\code{fields}}{Gets the names of the set properties of a \code{Node}}
 #'  \item{\code{fieldsAll}}{Gets the names of the set properties of a \code{Node} or any of its sub-Nodes}
 #'  \item{\code{isLeaf}}{Returns \code{TRUE} if the \code{Node} is a leaf, \code{FALSE} otherwise}
@@ -106,7 +111,6 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 #'  \item{\code{height}}{Returns max(level) of any of the \code{Nodes} of the tree}
 #'  \item{\code{averageBranchingFactor}}{Returns the average number of crotches below this \code{Node}}
 #'  \item{\code{root}}{Returns the root \code{Node} of a \code{Node}'s tree}
-#'  \item{\code{siblings}}{Returns a list of the siblings of this \code{Node}}
 #'  
 #' }
 #' 
@@ -129,15 +133,22 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 #' @export
 #' @format An \code{\link{R6Class}} generator object
 Node <- R6Class("Node",
-                lock_objects = FALSE,
+                lock_object = FALSE,
+                lock_class = TRUE,
+                cloneable = TRUE,
                     public = list(
-                      parent = NULL,
-                      children = NULL,
                       
-                      initialize=function(name, ...) {
-                        if (!missing(name)) private$p_name <- as.character(name)
-                        args <- list(...)
-                        mapply(FUN = function(arg, nme) self[[nme]] <- arg, args, names(args))
+                      
+                      initialize=function(name, check = c("check", "no-warn", "no-check"), ...) {
+                        if (!missing(name)) {
+                          name <- as.character(name)
+                          name <- CheckNameReservedWord(name, check)
+                          private$p_name <- name
+                        }
+                        if (!missing(...)) {
+                          args <- list(...)
+                          mapply(FUN = function(arg, nme) self[[nme]] <- arg, args, names(args))
+                        }
                         invisible (self)
                       },
                       
@@ -146,39 +157,39 @@ Node <- R6Class("Node",
                       ####################
                       # Tree creation
                       
-                      AddChild = function(name, ...) {
-                        child <- Node$new(as.character(name), ...)
+                      AddChild = function(name, check = c("check", "no-warn", "no-check"), ...) {
+                        child <- Node$new(as.character(name), check, ...)
                         invisible (self$AddChildNode(child))
                       },
                       
                       AddChildNode = function(child) {
-                        self$children[[child$name]] <- child
+                        private$p_children[[child$name]] <- child
                         self[[child$name]] <- child
                         child$parent <- self
                         invisible (child)
                       },
                       
                       
-                      AddSibling = function(name, ...) {
-                        sibling <- Node$new(as.character(name), ...)
+                      AddSibling = function(name, check = c("check", "no-warn", "no-check"), ...) {
+                        sibling <- Node$new(as.character(name), check, ...)
                         invisible (self$AddSiblingNode(sibling))
                       },
                       
                       AddSiblingNode = function(sibling) {
                         if(self$isRoot) stop("Cannot insert sibling to root!")
-                        self$parent[[sibling$name]] <- sibling
-                        self$parent$children <- append(self$parent$children, sibling, after = self$position)
-                        names(self$parent$children)[self$position + 1] <- sibling$name
-                        sibling$parent <- self$parent
+                        private$p_parent[[sibling$name]] <- sibling
+                        private$p_parent$children <- append(private$p_parent$children, sibling, after = self$position)
+                        names(private$p_parent$children)[self$position + 1] <- sibling$name
+                        sibling$parent <- private$p_parent
                         invisible (sibling)
                       },
                       
                       
                       RemoveChild = function(name) {
-                        if (!name %in% names(self$children)) stop(paste0("Node ", self$name, " does not contain child ", name))
-                        child <- self$children[[name]]
+                        if (!name %in% names(private$p_children)) stop(paste0("Node ", self$name, " does not contain child ", name))
+                        child <- private$p_children[[name]]
                         self$RemoveAttribute(name)
-                        self$children <- self$children[-child$position]
+                        private$p_children <- private$p_children[-child$position]
                         child$parent <- NULL
                         return (child)
                       },
@@ -220,6 +231,10 @@ Node <- R6Class("Node",
                       
                       Climb = function(...) {
                         Climb(self, ...)
+                      },
+                      
+                      Navigate = function(path) {
+                        Navigate(self, path)
                       },
                       
                       FindNode = function(name) {
@@ -294,6 +309,19 @@ Node <- R6Class("Node",
                         else private$p_name <- changeName(self, private$p_name, value)
                       },
                       
+                      
+                      parent = function(value) {
+                        if (missing(value)) return (private$p_parent)
+                        if (!is.null(value) && !is(value, "Node")) stop("Cannot set the parent to a non-Node!")
+                        private$p_parent <- value
+                      },
+                      
+                      children = function(value) {
+                        if (missing(value)) return (private$p_children)
+                        if (!is.null(value) && !is.list(value)) stop("Cannot set children to non-list!")
+                        private$p_children <- value
+                      },
+                      
                       isLeaf = function() {
                         isLeaf(self) 
                       },
@@ -303,15 +331,15 @@ Node <- R6Class("Node",
                       },
                       
                       count = function() {
-                        return (length(self$children))
+                        return (length(private$p_children))
                       },
                       
                       totalCount = function() {
-                        return (1 + sum(as.numeric(sapply(self$children, function(x) x$totalCount, simplify = TRUE, USE.NAMES = FALSE))))
+                        return (1 + sum(as.numeric(sapply(private$p_children, function(x) x$totalCount, simplify = TRUE, USE.NAMES = FALSE))))
                       }, 
                       
                       path = function() {
-                        c(self$parent$path, self$name)
+                        c(private$p_parent$path, self$name)
                       }, 
                       
                       pathString = function() {
@@ -321,15 +349,15 @@ Node <- R6Class("Node",
                       position = function() {
                         if (self$isRoot) return (1)
                         
-                        result <- which(names(self$parent$children) == self$name)
-                        # match(self$name, names(self$parent$children))
+                        result <- which(names(private$p_parent$children) == self$name)
+                        # match(self$name, names(private$p_parent$children))
                         return (result)
                       },
                                             
                       fields = function() {
                         nms <- ls(self)
                         nms <- nms[!(nms %in% NODE_RESERVED_NAMES_CONST)]
-                        nms <- nms[!(nms %in% names(self$children))]
+                        nms <- nms[!(nms %in% names(private$p_children))]
                         nms <- nms[!(str_sub(nms, 1, 1) == '.')]
                         return (nms)
                       },
@@ -348,7 +376,7 @@ Node <- R6Class("Node",
                         if (self$isLeaf) {
                           return (list(self))
                         } else {
-                          unlist(sapply(self$children, function(x) x$leaves))
+                          unlist(sapply(private$p_children, function(x) x$leaves))
                         }
                       },
                       
@@ -360,7 +388,7 @@ Node <- R6Class("Node",
                         if (self$isRoot) {
                           return (1)
                         } else {
-                          return (1 + self$parent$level)
+                          return (1 + private$p_parent$level)
                         }
                       },
                       
@@ -377,7 +405,7 @@ Node <- R6Class("Node",
                         if (self$isRoot) {
                           invisible (self)
                         } else {
-                          invisible (self$parent$root)
+                          invisible (private$p_parent$root)
                         }
                       },
                       
@@ -385,7 +413,7 @@ Node <- R6Class("Node",
                         if (self$isRoot) {
                           return (list())
                         } else {
-                          self$parent$children[names(self$parent$children) != self$name]
+                          private$p_parent$children[names(private$p_parent$children) != self$name]
                         }
                       },
                       
@@ -400,7 +428,9 @@ Node <- R6Class("Node",
                 
                     private = list(
                       
-                      p_name = ""
+                      p_name = "",
+                      p_children = NULL,
+                      p_parent = NULL
                       
                     )
                   )

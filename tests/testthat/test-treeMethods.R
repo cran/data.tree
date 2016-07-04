@@ -1,6 +1,43 @@
 context("tree methods")
 
+test_that("Node instantiation", {
+  
+  n <- Node$new("bla")
+  expect_equal(n$name, "bla")
 
+  n <- Node$new("bla", check = "check")
+  expect_equal(n$name, "bla")
+
+  n <- Node$new("bla", check = "no-check")
+  expect_equal(n$name, "bla")
+  
+  n <- Node$new("bla", check = "no-warn")
+  expect_equal(n$name, "bla")
+  
+  n <- Node$new("bla", check = "whatever")
+  expect_equal(n$name, "bla")
+  
+  expect_that(n <- Node$new("name"), gives_warning())
+  expect_equal(n$name, "name2")
+  
+  expect_that(n <- Node$new("name", check = "check"), gives_warning())
+  expect_equal(n$name, "name2")
+
+  expect_that(n <- Node$new("name", check = "no-check"), not(gives_warning()))
+  expect_equal(n$name, "name")
+
+  expect_that(n <- Node$new("name", check = FALSE), not(gives_warning()))
+  expect_equal(n$name, "name")
+  
+  
+  expect_that(n <- Node$new("name", check = "no-warn"), not(gives_warning()))
+  expect_equal(n$name, "name2")
+  
+  expect_that(n <- Node$new("name", check = "whatever"), gives_warning())
+  expect_equal(n$name, "name2")
+  
+      
+})
 
 test_that("Climb NULL", {
   data(acme)
@@ -249,6 +286,51 @@ test_that("Traverse empty filter level", {
   nms <- sapply(tr, function(x) x$name)
   exp <- vector(mode = "list")
   expect_equal(nms, exp)
+  
+})
+
+
+
+test_that("Traverse custom method", {
+  CustomTraversalFunction <- function(node) {
+    if (node$isLeaf) return (NULL)
+    return (node$children[[1]])
+  }
+  data(acme)
+  tr <- Traverse(acme, traversal = CustomTraversalFunction, filterFun = function(x) x$name != "Accounting")
+  nms <- sapply(tr, function(x) x$name)
+  exp <- c("Acme Inc.", "New Software")
+  expect_equal(nms, exp)
+  
+})
+
+test_that("Traverse custom method multi", {
+  CustomTraversalFunction <- function(node) {
+    if (node$isLeaf) return (NULL)
+    return (node$children)
+  }
+  data(acme)
+  tr <- Traverse(acme, traversal = CustomTraversalFunction)
+  tr2 <- Traverse(acme, traversal = "pre-order")
+  nms <- sapply(tr, function(x) x$name)
+  nms2 <- sapply(tr2, function(node) node$name)
+  
+  expect_equal(nms, nms2)
+  
+})
+
+test_that("Traverse custom method multi prune", {
+  CustomTraversalFunction <- function(node) {
+    if (node$isLeaf) return (NULL)
+    return (node$children)
+  }
+  data(acme)
+  tr <- Traverse(acme, traversal = CustomTraversalFunction, pruneFun = function(node) node$name != "IT")
+  tr2 <- Traverse(acme, traversal = "pre-order", pruneFun = function(node) node$name != "IT")
+  nms <- sapply(tr, function(x) x$name)
+  nms2 <- sapply(tr2, function(node) node$name)
+  
+  expect_equal(nms, nms2)
   
 })
 

@@ -1,5 +1,29 @@
 # All changes to data.tree are documented here.
 
+
+## Version 0.4.0
+- IMPROVE: as.Node.data.frame and FromDataFrameTable now support paths containing reserved words (#65)
+- CHANGE: Node$new now checks that names are not reserved names. As a consequence, many conversions to Node now contain a check parameter.
+- IMPROVE: Climb is now much faster when climbing by name (#71)
+- IMPROVE: As a result of #71, many other functions are much faster, e.g. FromDataFrameTable (#72)
+
+
+## Version 0.3.7
+- ADD: Traverse can now also take custom function as a traversal argument
+- ADD: Navigate method
+- ADD: as.Node.BinaryTree Convert SplittingNode from party package to data.tree (#6)
+- ADD: as.Node.party Convert party class from partykit package to data.tree (#6)
+
+## Version 0.3.6
+- FIX: GetDefaultTooltip now also works for attributes which are functions
+- FIX: GetAttribute now returns attributes with length 0 (e.g. an empty list)
+- ADD: Sort, Revert and Prune are now also available in traditional format (e.g. Prune(node, pruneFun))
+- FIX: FromListSimple: Empty lists now become empty nodes (#59)
+- IMPROVE: FromListSimple: Unnamed list elements are now also converted (#61)
+- IMPROVE: documentation of Aggregate
+- IMPROVE: Check type when setting Node$parent and Node$children (#63)
+
+
 ## Version 0.3.5
 - FIX: minor correction in documentation
 

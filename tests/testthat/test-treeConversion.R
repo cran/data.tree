@@ -151,7 +151,7 @@ test_that("as.Node.list warning", {
   lol <- list(type = "Root", list(type = "Rule", count = 1), list(type = "Rule", count = 2))
   #tree <- FromListSimple(lol, nameName = NULL, nodeName = 1)
   tree <- NULL
-  expect_that(FromListSimple(lol, nameName = NULL, nodeName = 1, warn = FALSE), not(gives_warning()))
+  expect_that(FromListSimple(lol, nameName = NULL, nodeName = 1, check = "no-warn"), not(gives_warning()))
   expect_that(tree <- FromListSimple(lol, nameName = NULL, nodeName = 1), gives_warning())
   
   expect_equal(tree$totalCount, 3)
@@ -159,6 +159,10 @@ test_that("as.Node.list warning", {
   
   expect_equal(unname(tree$Get("count")), c(2,0,0))
   expect_equal(unname(tree$Get("count2")), c(NA, 1, 2))
+  
+  expect_that(FromListSimple(lol, nameName = NULL, nodeName = 1, check = "no-check"), not(gives_warning()))
+  expect_that(tree <- FromListSimple(lol, nameName = NULL, nodeName = 1), gives_warning())
+  
   
 })
 
@@ -187,8 +191,8 @@ children:
   expect_equal(tree$height, 3)
   expect_equal(tree$CR$CR_CHF$name, "CR_CHF")
   
-  #market is lost:
-  expect_equal(tree$fieldsAll, c("description", "type"))
+  #market is numbered (1) instead of lost:
+  expect_equal(tree$fieldsAll, c("description", "type", "1"))
   
   
   
@@ -222,6 +226,23 @@ children:
 })
 
 
+test_that("as.Node.list empty list()", {
+  lol = list(a = list(aa=1), b="hello", c = list())
+  tree = FromListSimple(lol)
+  expect_equal(tree$totalCount, 3)
+  expect_equal(tree$height, 2)
+  expect_equal(tree$c$count, 0)
+  expect_equal(tree$c$fields, character(0))
+})
+
+
+test_that("as.Node.list with empty fields", {
+  lol = list(a = list(aa=1), "hello", c = list(), 1, d=2, list(e=4))
+  tree = FromListSimple(lol)
+  expect_equal(length(tree$fields), 3)
+  expect_equal(tree$count, 3)
+  expect_true(all(c(1, 2) %in% tree$fields))
+})
 
 
 

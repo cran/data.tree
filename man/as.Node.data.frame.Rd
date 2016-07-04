@@ -11,9 +11,10 @@
   na.rm = TRUE)
 
 FromDataFrameTable(table, pathName = "pathString", pathDelimiter = "/",
-  colLevels = NULL, na.rm = TRUE)
+  colLevels = NULL, na.rm = TRUE, check = c("check", "no-warn",
+  "no-check"))
 
-FromDataFrameNetwork(network)
+FromDataFrameNetwork(network, check = c("check", "no-warn", "no-check"))
 }
 \arguments{
 \item{x}{The data.frame in the required format.}
@@ -31,13 +32,20 @@ FromDataFrameNetwork(network)
 \item{na.rm}{If \code{TRUE}, then NA's are treated as NULL and values will not be set on nodes}
 
 \item{table}{a \code{data.frame} in table or tree format, i.e. having a row for each leaf (and optionally
-for additional nodes). There should be a column called \code{pathName}, separated by \code{pathDelimiter}, 
+for additional nodes). There should be a column called \code{pathName}, separated by \code{pathDelimiter},
 describing the path of each row.}
+
+\item{check}{Either
+\itemize{
+ \item{\code{"check"}: if the name conformance should be checked and warnings should be printed in case of non-conformance (the default)}
+ \item{\code{"no-warn"}: if the name conformance should be checked, but no warnings should be printed in case of non-conformance (if you expect non-conformance)}
+ \item{\code{"no-check" or FALSE}: if the name conformance should not be checked; use this if performance is critical. However, in case of non-conformance, expect cryptic follow-up errors}
+}}
 
 \item{network}{A \code{data.frame} in network format, i.e.
 it must adhere to the following requirements:
 \itemize{
- \item{It must contain as many rows as there are nodes, excluding the root}
+ \item{It must contain as many rows as there are nodes (excluding the root, there is no row for the root)}
  \item{Its first and second columns contain the network relationships. This can be either climbing (from parent to children) or descending (from child to parent)}
  \item{Its subsequent columns contain the attributes to be set as fields on the nodes}
  \item{It must contain a single root}
@@ -67,11 +75,11 @@ print(xN, "p", "cost")
 
 #More complex Table structure, using colLevels
 acme$Set(floor = c(1, 2, 3),  filterFun = function(x) x$level == 2)
-x <- ToDataFrameTable(acme, "pathString", "floor", "p", "cost") 
+x <- ToDataFrameTable(acme, "pathString", "floor", "p", "cost")
 x
 xN <- FromDataFrameTable(x, colLevels = list(NULL, "floor", c("p", "cost")), na.rm = TRUE)
 print(xN, "floor", "p", "cost")
- 
+
 #Network
 x <- ToDataFrameNetwork(acme, "p", "cost", direction = "climb")
 x

@@ -43,6 +43,7 @@ This is only syntactical sugar, and the result of both variations is exactly the
   \item{\code{RemoveChild(name)}}{Remove the child \code{Node} called \code{name} from a \code{Node} and returns it.}
   \item{\code{RemoveAttribute(name, stopIfNotAvailable)}}{Removes attribute called \code{name} from this \code{Node}. Gives an error if \code{stopIfNotAvailable} and the attribute doesn't exist.}
   \item{\code{\link{Climb}(...)}}{Find a node with path \code{...}, where the \code{...} arguments are the \code{name}s of the \code{Node}s, or other field values.}
+  \item{\code{\link{Navigate}(path)}}{Find a node by relative \code{path}}
   \item{\code{\link{FindNode}(name)}}{Find a node with name \code{name}. Especially useful if \code{\link{AreNamesUnique}} is \code{TRUE}}
   \item{\code{\link{Get}(attribute, ..., traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"), pruneFun = NULL, filterFun = NULL, format = NULL, inheritFromAncestors = FALSE, simplify = c(TRUE, FALSE, "array", "regular"))}}{Traverses the tree and collects values along the way.}
   \item{\code{\link{Do}(fun, ..., traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"), pruneFun = NULL, filterFun = NUL)}}{Traverses the tree and call fun on each node.}
@@ -54,11 +55,14 @@ This is only syntactical sugar, and the result of both variations is exactly the
 }
 }
 
-\section{Properties}{
+\section{Actives (aka Properties)}{
 
   
 \describe{
  \item{\code{name}}{Gets or sets the name of a \code{Node}. For example \code{Node$name <- "Acme"}}
+ \item{\code{parent}}{Gets or sets the parent \code{Node} of a \code{Node}. Only set this if you know what you are doing, as you might mess up the tree structure!}
+ \item{\code{children}}{Gets or sets the children \code{list} of a \code{Node}. Only set this if you know what you are doing, as you might mess up the tree structure!}
+ \item{\code{siblings}}{Returns a list of the siblings of this \code{Node}}
  \item{\code{fields}}{Gets the names of the set properties of a \code{Node}}
  \item{\code{fieldsAll}}{Gets the names of the set properties of a \code{Node} or any of its sub-Nodes}
  \item{\code{isLeaf}}{Returns \code{TRUE} if the \code{Node} is a leaf, \code{FALSE} otherwise}
@@ -74,7 +78,6 @@ This is only syntactical sugar, and the result of both variations is exactly the
  \item{\code{height}}{Returns max(level) of any of the \code{Nodes} of the tree}
  \item{\code{averageBranchingFactor}}{Returns the average number of crotches below this \code{Node}}
  \item{\code{root}}{Returns the root \code{Node} of a \code{Node}'s tree}
- \item{\code{siblings}}{Returns a list of the siblings of this \code{Node}}
  
 }
 }
