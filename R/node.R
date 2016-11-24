@@ -55,13 +55,6 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 #' @details Assemble \code{Node} objects into a \code{data.tree}
 #' structure and use the traversal methods to set, get, and perform operations on it. Typically, you construct larger tree 
 #' structures by converting from \code{data.frame}, \code{list}, or other formats.
-#' As \code{Node} is object oriented, there are always two variations of methods:
-#' \itemize{
-#'   \item a.) OO style: \code{acme$Sort()}
-#'   \item b.) traditional: \code{Sort(acme)}
-#' }
-#' This is only syntactical sugar, and the result of both variations is exactly the same. Other examples where this apply are \code{Set},
-#' \code{Get}, \code{Do}, \code{Prune}, \code{Climb}, \code{Sort}, etc.
 #' 
 #' @docType class
 #' @importFrom R6 R6Class
@@ -135,6 +128,8 @@ NODE_RESERVED_NAMES_CONST <- c( 'AddChild',
 Node <- R6Class("Node",
                 lock_object = FALSE,
                 lock_class = TRUE,
+                portable = TRUE,
+                class = TRUE,
                 cloneable = TRUE,
                     public = list(
                       
@@ -176,7 +171,7 @@ Node <- R6Class("Node",
                       },
                       
                       AddSiblingNode = function(sibling) {
-                        if(self$isRoot) stop("Cannot insert sibling to root!")
+                        if(isRoot(self)) stop("Cannot insert sibling to root!")
                         private$p_parent[[sibling$name]] <- sibling
                         private$p_parent$children <- append(private$p_parent$children, sibling, after = self$position)
                         names(private$p_parent$children)[self$position + 1] <- sibling$name
@@ -212,14 +207,17 @@ Node <- R6Class("Node",
                       ## Side Effects
                       
                       Sort = function(attribute, ..., decreasing = FALSE, recursive = TRUE) {
+                        .Deprecated("Sort(node, ...)")
                         Sort(self, attribute, ..., decreasing = decreasing, recursive = recursive)  
                       },
                       
                       Revert = function(recursive = TRUE) {
+                        .Deprecated("Revert(node, ...)")
                         Revert(self, recursive)
                       },
                       
                       Prune = function(pruneFun) {
+                        .Deprecated("Prune(node, ...)")
                         Prune(self, pruneFun = pruneFun)
                       },
                       
@@ -234,10 +232,12 @@ Node <- R6Class("Node",
                       },
                       
                       Navigate = function(path) {
+                        .Deprecated("Navigate(node, ...)")
                         Navigate(self, path)
                       },
                       
                       FindNode = function(name) {
+                        .Deprecated("FindNode(node, ...)")
                         FindNode(self, name)
                       },
                       
@@ -250,10 +250,9 @@ Node <- R6Class("Node",
                                      traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"),  
                                      pruneFun = NULL,
                                      filterFun = NULL, 
-                                     format = NULL,
+                                     format = FALSE,
                                      inheritFromAncestors = FALSE,
                                      simplify = c(TRUE, FALSE, "array", "regular")) {
-                        
                         t <- Traverse(self, 
                                       traversal = traversal, 
                                       pruneFun = pruneFun,
@@ -347,7 +346,7 @@ Node <- R6Class("Node",
                       },
                       
                       position = function() {
-                        if (self$isRoot) return (1)
+                        if (isRoot(self)) return (1)
                         
                         result <- which(names(private$p_parent$children) == self$name)
                         # match(self$name, names(private$p_parent$children))
@@ -363,7 +362,7 @@ Node <- R6Class("Node",
                       },
                       
                       fieldsAll = function() {
-                        as.vector(na.omit(unique(unlist(self$Get("fields")))))
+                        as.vector(na.omit(unique(unlist(Get(Traverse(self), "fields")))))
                       },
                       
                       levelName = function() {
@@ -385,7 +384,7 @@ Node <- R6Class("Node",
                       },
                       
                       level = function() {
-                        if (self$isRoot) {
+                        if (isRoot(self)) {
                           return (1)
                         } else {
                           return (1 + private$p_parent$level)
@@ -394,15 +393,15 @@ Node <- R6Class("Node",
                       
                       height = function() {
                         if (isLeaf(self)) return (1)
-                        max(self$Get("level", filterFun = function(x) isLeaf(x) && x$position == 1)) - self$level + 1
+                        max(Get(Traverse(self, filterFun = function(x) isLeaf(x) && x$position == 1), "level")) - self$level + 1
                       },
                       
                       isBinary = function() {
-                        all(2 == self$Get("count", filterFun = function(x) !x$isLeaf))
+                        all(2 == Get(Traverse(self, filterFun = function(x) !x$isLeaf), "count"))
                       },
                       
                       root = function() {
-                        if (self$isRoot) {
+                        if (isRoot(self)) {
                           invisible (self)
                         } else {
                           invisible (private$p_parent$root)
@@ -410,7 +409,7 @@ Node <- R6Class("Node",
                       },
                       
                       siblings = function() {
-                        if (self$isRoot) {
+                        if (isRoot(self)) {
                           return (list())
                         } else {
                           private$p_parent$children[names(private$p_parent$children) != self$name]

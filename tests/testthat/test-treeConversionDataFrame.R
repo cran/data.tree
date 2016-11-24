@@ -19,6 +19,18 @@ test_that("as.Node.data.frame", {
 })
 
 
+test_that("FromDataFrameTable no extra column", {
+  
+  pathString <- c("a/b/c/d", "a/b/c/e", "a/f")
+
+  
+  df <- data.frame(pathString)
+  tree <- FromDataFrameTable(df)
+
+  expect_equal(Get(tree$leaves, "name"), c(d = "d", e = "e", f = "f"))
+  
+})
+
 
 test_that("FromDataFrameTable reserved words", {
 
@@ -28,10 +40,10 @@ test_that("FromDataFrameTable reserved words", {
   df <- data.frame(pathString, value, stringsAsFactors = FALSE)
 
   #no warn
-  expect_that(tree <- FromDataFrameTable(df, na.rm = TRUE), not(gives_warning()))
+  expect_warning(tree <- FromDataFrameTable(df, na.rm = TRUE), NA)
   expect_equal(Get(tree$leaves, "value"), c(d = "d", e = "e", f = "f"))
   
-  expect_that(tree <- FromDataFrameTable(df, na.rm = TRUE, check = "no-warn"), not(gives_warning()))
+  expect_warning(tree <- FromDataFrameTable(df, na.rm = TRUE, check = "no-warn"), NA)
   expect_equal(Get(tree$leaves, "value"), c(d = "d", e = "e", f = "f"))
 
   #reserved words
@@ -42,7 +54,7 @@ test_that("FromDataFrameTable reserved words", {
   expect_equal(Get(tree$leaves, "value"), c(count2 = "d", e = "e", leaves2 = "f"))
   
   df <- data.frame(pathString, value, stringsAsFactors = FALSE)
-  expect_that(tree <- FromDataFrameTable(df, na.rm = TRUE, check = "no-warn"), not(gives_warning()))
+  expect_warning(tree <- FromDataFrameTable(df, na.rm = TRUE, check = "no-warn"), NA)
   expect_equal(Get(tree$leaves, "value"), c(count2 = "d", e = "e", leaves2 = "f"))
   
 

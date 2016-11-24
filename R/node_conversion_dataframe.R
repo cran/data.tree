@@ -1,5 +1,7 @@
 #' Convert a \code{data.tree} structure to a \code{data.frame}
 #'
+#' If a node field contains data of length > 1, then that is converted into a string in the
+#' data.frame. 
 #'
 #' @param x The root \code{Node} of the tree or sub-tree to be convert to a data.frame
 #' @param ... the attributes to be added as columns of the data.frame. See \code{\link{Get}} for details.
@@ -9,6 +11,8 @@
 #' @param type when converting type columns, the \code{type} is the discriminator, i.e. an attribute (e.g. field name) of each node
 #' @param prefix when converting type columns, the prefix used for the column names. Can be NULL to omit prefixes.
 #' @param filterFun a function taking a \code{Node} as an argument. See \code{\link{Traverse}} for details.
+#' @param format if \code{FALSE} (the default), then no formatting will be applied. If \code{TRUE}, then the first formatter (if any) along the ancestor
+#' path is used for formatting. 
 #' @param inheritFromAncestors if FALSE, and if the attribute is a field or a method, then only a \code{Node} itself is
 #' searched for the field/method. If TRUE, and if the \code{Node} does not contain the attribute, then ancestors are also searched.
 #' @param row.names \code{NULL} or a character vector giving the row names for the data frame.
@@ -63,15 +67,16 @@ as.data.frame.Node <- function(x,
                                traversal = c("pre-order", "post-order", "in-order", "level", "ancestor"),
                                pruneFun = NULL,
                                filterFun = NULL,
+                               format = FALSE,
                                inheritFromAncestors = FALSE
 ) {
 
   traversal <- traversal[1]
 
-  if(!x$isRoot || length(pruneFun) > 0) {
+  if(!isRoot(x) || length(pruneFun) > 0) {
     #clone s.t. x is root (for pretty level names)
     x <- Clone(x, attributes = TRUE)
-    if (length(pruneFun) > 0) x$Prune(pruneFun)
+    if (length(pruneFun) > 0) Prune(x, pruneFun)
     x$parent <- NULL
   }
 
@@ -92,7 +97,17 @@ as.data.frame.Node <- function(x,
     if (length(col) > 1) {
       it <- col
     } else {
-      it <- Get(t, col, inheritFromAncestors = inheritFromAncestors)
+      it <- Get(t, 
+                col,
+                format = format, 
+                inheritFromAncestors = inheritFromAncestors)
+      it <- sapply(it, 
+                   function(el) {
+                          if (inherits(el, "Node")) return ("")
+                          else if (length(el) > 1) return (toString(el))
+                          else return (el)
+                   }
+                )
     }
     df[colName] <- it
 
@@ -142,6 +157,7 @@ ToDataFrameNetwork <- function(x,
                                ...,
                                direction = c("climb", "descend"),
                                pruneFun = NULL,
+                               format = FALSE,
                                inheritFromAncestors = FALSE) {
   direction <- direction[1]
   if(!AreNamesUnique(x)) GetName <- function(x) x$pathString
@@ -160,7 +176,7 @@ ToDataFrameNetwork <- function(x,
 
   else stop(paste0("direction ", direction, " unknown. Must be either climb or descen."))
 
-  df2 <- ToDataFrameTree(x, ..., traversal = "level", pruneFun = pruneFun, inheritFromAncestors = inheritFromAncestors)[,-1, drop = FALSE]
+  df2 <- ToDataFrameTree(x, ..., traversal = "level", pruneFun = pruneFun, format = format, inheritFromAncestors = inheritFromAncestors)[,-1, drop = FALSE]
 
   df <- cbind(df, df2)
   df <- df[-1,]
@@ -271,7 +287,7 @@ as.Node.data.frame <- function(x,
 #' for additional nodes). There should be a column called \code{pathName}, separated by \code{pathDelimiter},
 #' describing the path of each row.
 #' @param pathName The name of the column in x containing the path of the row
-#' @param pathDelimiter The delimiter used
+#' @param pathDelimiter The delimiter used to separate nodes in \code{pathName}
 #' @param colLevels Nested list of column names, determining on what node levels the attributes are written to.
 #'
 #' @inheritParams CheckNameReservedWord
@@ -284,10 +300,11 @@ FromDataFrameTable <- function(table,
                                na.rm = TRUE,
                                check = c("check", "no-warn", "no-check")
                                ) {
+  table[[pathName]] <- as.character(table[[pathName]])
   root <- NULL
   mycols <- names(table)[ !(names(table) %in% c(NODE_RESERVED_NAMES_CONST, pathName)) ]
   for (i in 1:nrow(table)) {
-    myrow <- table[ i, ]
+    myrow <- table[ i, , drop = FALSE]
     mypath <- myrow[[pathName]]
     myvalues <- myrow[!colnames(myrow) == pathName]
 

@@ -33,7 +33,7 @@ tree$Europe$Switzerland$population
 
 ## ------------------------------------------------------------------------
 northAm <- tree$`North America`
-northAm$Sort("GNI", decreasing = TRUE)
+Sort(northAm, "GNI", decreasing = TRUE)
 print(northAm, "iso3", "population", "GNI", limit = 12)
 
 ## ------------------------------------------------------------------------
@@ -52,7 +52,7 @@ tree$Do(function(x) {
      traversal = "post-order")
 
 ## ------------------------------------------------------------------------
-tree$Sort(attribute = "population", decreasing = TRUE, recursive = TRUE)
+Sort(tree, attribute = "population", decreasing = TRUE, recursive = TRUE)
 
 
 ## ------------------------------------------------------------------------
@@ -336,7 +336,7 @@ flareLoL <- fromJSON(file(fileName),
                      simplifyDataFrame = FALSE
                      )
 
-flareTree <- as.Node(flareLoL, mode = "explicit")
+flareTree <- as.Node(flareLoL, mode = "explicit", check = "no-warn")
 flareTree$fieldsAll
 print(flareTree, "size", limit = 30)
 
@@ -382,7 +382,7 @@ df <- data.frame(
       stringsAsFactors = FALSE
     )
  
-print(head(df)[-c(3,5,6)], row.names = FALSE)
+print(head(df)[c(1,2,3,4)], row.names = FALSE)
 
 
 ## ------------------------------------------------------------------------

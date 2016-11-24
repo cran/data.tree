@@ -86,7 +86,7 @@ sum(population$Get("population", filterFun = isLeaf))
 
 
 ## ------------------------------------------------------------------------
-population$Prune(pruneFun = function(x) !x$isLeaf || x$population > 1000000)
+Prune(population, pruneFun = function(x) !x$isLeaf || x$population > 1000000)
 
 ## ------------------------------------------------------------------------
 sum(population$Get("population", filterFun = isLeaf), na.rm = TRUE)
@@ -336,7 +336,7 @@ acme$Do(function(node) node$RemoveAttribute("avgExpectedCost"))
 
 ## ------------------------------------------------------------------------
 acme$Set(cost = c(function(self) sum(sapply(self$children, 
-                                            function(child) GetAttribute(child, "cost", format = identity)))), 
+                                            function(child) GetAttribute(child, "cost")))), 
          filterFun = isNotLeaf)
 print(acme, "cost")
 acme$IT$AddChild("Paperless", cost = 240000)
@@ -390,14 +390,14 @@ acmeClone$name <- "New Acme"
 acme$name == acmeClone$name
 
 ## ------------------------------------------------------------------------
-acme$Sort("name")
+Sort(acme, "name")
 acme
-acme$Sort(Aggregate, "cost", sum, decreasing = TRUE, recursive = TRUE)
+Sort(acme, Aggregate, "cost", sum, decreasing = TRUE, recursive = TRUE)
 print(acme, "cost", aggCost = acme$Get(Aggregate, "cost", sum))
 
 ## ------------------------------------------------------------------------
 acme$Do(function(x) x$cost <- Aggregate(x, "cost", sum))
-acme$Prune(function(x) x$cost > 700000)
+Prune(acme, function(x) x$cost > 700000)
 print(acme, "cost")
 
 ## ---- eval = FALSE-------------------------------------------------------
