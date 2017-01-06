@@ -1,16 +1,15 @@
 
-#'@rdname ToGraphViz
+#'@rdname ToDiagrammeRGraph
 #'@import DiagrammeR
 #'
 #'@param x The root node of the data.tree structure to plot
-#'@param engine string for the Graphviz layout engine; can be dot (default), 
-#'neato, circo, or twopi. For more information see https://github.com/mdaines/viz.js#usage.
 #'@inheritParams ToDataFrameNetwork
+#'@inheritParams DiagrammeR::render_graph
 #'
 #'@export
-plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL, engine = "dot") {
-  dotLng <- ToGraphViz(x, direction, pruneFun)
-  grViz(dotLng, engine)
+plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL, output = "graph") {
+  graph <- ToDiagrammeRGraph(x, direction, pruneFun)
+  render_graph(graph, output = output)
 }
 
 
@@ -81,7 +80,7 @@ plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL
 #' @examples
 #' data(acme)
 #' SetGraphStyle(acme, rankdir = "TB")
-#' SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2)
+#' SetEdgeStyle(acme, arrowhead = "vee", color = "blue", penwidth = 2)
 #' #per default, Node style attributes will be inherited:
 #' SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow", 
 #'              fontname = "helvetica", tooltip = GetDefaultTooltip)
@@ -99,54 +98,66 @@ plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL
 #' plot(acme)
 #' 
 #' @export
-ToGraphViz <- function(root, direction = c("climb", "descend"), pruneFun = NULL) {
-  # get all node styles
-
+ToDiagrammeRGraph <- function(root, direction = c("climb", "descend"), pruneFun = NULL) {
+  #get unique node styles defined on tree
+  
   ns <- unique(unlist(sapply(root$Get(function(x) attr(x, "nodeStyle"), simplify = FALSE), names)))
-    
+  
+  
+  # set tmp .id
   tr <- Traverse(root, pruneFun = pruneFun)
-  anu <- AreNamesUnique(root)
-  myargs <- list(nodes = Get(tr, ifelse(anu, "name", "pathString")))
-  #need to add label if not all names are unique
-  if (!anu && !"label" %in% ns ) ns <- c(ns, "label")
+  Set(tr, `.id` = 1:length(tr))
+  
+  #create nodes df
+  myargs <- NULL
+  if(!"label" %in% ns) ns <- c(ns, "label")
   for (style in ns) {
     myargs[[style]] <- Get(tr, function(x) {
       myns <- GetStyle(x, style, "node")
-      if (style == "label" && !anu && length(myns) == 0) myns <- x$name
-      if (is.null(myns)) myns <- ""
+      if (style == "label" && length(myns) == 0) myns <- x$name
+      #if (is.null(myns)) myns <- ""
       myns
     })
   }
-  #names(myargs) <- c("nodes", ns)
   
-  nodes <- do.call(create_nodes, myargs)
-  if (!anu && !"label" %in% ns) nodes$label <- Get(tr, "name")
-  #nodes <- nodes[!names(nodes)=="tooltip"]
+  nodes <- do.call(create_node_df, c(n = length(tr), myargs))
   
-  ns <- unique(unlist(sapply(root$Get(function(x) attr(x, "edgeStyle"), simplify = FALSE), names)))
+  # get unique edge styles
+  
+  es <- unique(unlist(sapply(root$Get(function(x) attr(x, "edgeStyle"), simplify = FALSE), names)))
   
   
   myargs <- list()
   #see http://stackoverflow.com/questions/19749923/function-factory-in-r
-  for (style in ns) {
+  for (style in es) {
     myargs[[style]] <- GetEdgeStyleFactory(style)
   }
-
-  #nodes <- do.call(create_nodes, myargs)
-
-  edges <- do.call("ToDataFrameNetwork", c(root, direction = direction, pruneFun = pruneFun, myargs)) 
   
-  graphStyle <- attr(root, "graphStyle")
-  if (!is.null(graphStyle)) graphAttributes <- paste(names(graphStyle), paste0("'", graphStyle, "'"), sep = " = ", collapse = ", ")
-  else graphAttributes <- ""
-  nodeAttributes <- GetDefaultStyles(root, type = "node")
-  edgeAttributes <- GetDefaultStyles(root, type = "edge")
-  graph <- create_graph(nodes, edges, graph_attrs = graphAttributes, node_attrs = nodeAttributes, edge_attrs = edgeAttributes)
   
-  #return (graph)
-  #render_graph(graph)
-  #cat(graph$dot_code)
-  return (graph$dot_code)
+  
+  edges <- do.call("ToDataFrameNetwork", c(root, from = function(node) node$parent$`.id`, to = ".id", myargs, direction = list(direction), pruneFun = pruneFun))[,-(1:2)]
+  edges <- do.call(create_edge_df, as.list(edges))
+  
+  graph <- create_graph(nodes, edges, attr_theme = NULL)
+  
+  # global attributes
+  # (we'd prefer to set the default on the root as graphAttributes, but
+  # due to a DiagrammeR bug/feature this is not possible). So instead
+  # repeating styles redundantly
+  
+  graphAttributes <- attr(root, "graphStyle")
+  #if (is.null(graphAttributes)) graphAttributes <- ""
+  #nodeAttributes <- GetDefaultStyles(root, type = "node")
+  #edgeAttributes <- GetDefaultStyles(root, type = "edge")
+  nodeAttributes <- NULL
+  edgeAttributes <- NULL
+  
+  graph <- set_global_graph_attrs(graph, 
+                                  c(names(graphAttributes), names(nodeAttributes), names(edgeAttributes)), 
+                                  c(graphAttributes, nodeAttributes, edgeAttributes), 
+                                  c(rep('graph', length(graphAttributes)), rep('node', length(nodeAttributes)), rep('edge', length(edgeAttributes))))
+  
+  return (graph)
   
 }
 
@@ -155,9 +166,9 @@ ToGraphViz <- function(root, direction = c("climb", "descend"), pruneFun = NULL)
 GetEdgeStyleFactory <- function(style) {
   style <- force(style)
   function(node = node, origNode = node) {
-    myns <- GetStyle(node, style, "edge")
-    if (is.null(myns)) myns <- ""
-    myns
+    myes <- GetStyle(node, style, "edge")
+    #if (is.null(myes)) myes <- ""
+    myes
   }
 }
 
@@ -170,7 +181,7 @@ GetEdgeStyleFactory <- function(style) {
 #' @param keepExisting If TRUE, then style attributes are added to possibly
 #' existing style attributes on the node. 
 #' 
-#' @rdname ToGraphViz
+#' @rdname ToDiagrammeRGraph
 #' 
 #' @export
 SetNodeStyle <- function(node, 
@@ -181,7 +192,7 @@ SetNodeStyle <- function(node,
 }
 
 
-#' @rdname ToGraphViz
+#' @rdname ToDiagrammeRGraph
 #' @export
 SetEdgeStyle <- function(node,
                          inherit = TRUE,
@@ -208,7 +219,7 @@ SetStyle <- function(node,
 
 
 
-#' @rdname ToGraphViz 
+#' @rdname ToDiagrammeRGraph 
 #' @export
 SetGraphStyle <- function(root,
                           keepExisting = FALSE,
@@ -233,19 +244,8 @@ GetStyle <- function(node, styleName, type = c("node", "edge"), origNode = node)
       }
     } else {
       #root
-      if (identical(node, origNode)) {
-        #directly asked on root
-        if (styleName %in% c("label", "tooltip") || is.function(res)) {
-          if (is.function(res)) res <- res(origNode)
-          return (res)
-        }
-      } else {
-        #inherited are only functions
-        if (is.function(res)) {
-          return (res(origNode))
-        }
-      }
-      
+      if (is.function(res)) res <- res(origNode)
+      return (res)
     }
   }
   #recursion exit criteria
@@ -266,7 +266,7 @@ GetDefaultStyles <- function(node, type = c("node", "edge")) {
     isFun <- sapply(res, is.function)
     res <- res[!isFun]
     if (length(res) == 0) return (NULL)
-    res <- paste(names(res), paste0("'", res, "'"), sep = " = ", collapse = ", ")
+    #res <- paste(names(res), paste0("'", res, "'"), sep = " = ", collapse = ", ")
     return (res) 
   } else return (NULL)
 }
