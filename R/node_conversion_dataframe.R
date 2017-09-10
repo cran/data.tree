@@ -105,6 +105,7 @@ as.data.frame.Node <- function(x,
                    function(el) {
                           if (inherits(el, "Node")) return ("")
                           else if (length(el) > 1) return (toString(el))
+                          else if (length(el) == 0) return (NA)
                           else return (el)
                    }
                 )
@@ -174,7 +175,7 @@ ToDataFrameNetwork <- function(x,
                                                   to = children,
                                                   stringsAsFactors = FALSE)
 
-  else stop(paste0("direction ", direction, " unknown. Must be either climb or descen."))
+  else stop(paste0("direction ", direction, " unknown. Must be either climb or descend."))
 
   df2 <- ToDataFrameTree(x, ..., traversal = "level", pruneFun = pruneFun, format = format, inheritFromAncestors = inheritFromAncestors)[,-1, drop = FALSE]
 

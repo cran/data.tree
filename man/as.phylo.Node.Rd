@@ -20,7 +20,7 @@ This method requires the ape package to be installed and loaded.
 library(ape)
 data(acme)
 acmephylo <- as.phylo(acme)
-plot(acmephylo)
+#plot(acmephylo)
 
 
 }
@@ -28,4 +28,3 @@ plot(acmephylo)
 Other ape phylo conversions: \code{\link{GetPhyloNr}},
   \code{\link{as.Node.phylo}}
 }
-
