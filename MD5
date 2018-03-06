@@ -1,12 +1,12 @@
-ad9e1142828cb6e61716ec5f7aed51d6 *DESCRIPTION
+ef94ab4bb3eb954b16b78ebcf886f04e *DESCRIPTION
 2a0ea66df6788cb065983a61f1265458 *NAMESPACE
-b1fb131439f93ce7d9cec895e165f4dd *NEWS
+cf8ca9a4648c17fac45f91975f0dcec7 *NEWS
 c0663c95068abd8ef3215a1155835019 *R/data.tree.R
 4f1f730ea09b49775549163579484ed5 *R/data_doc.R
 506a03df8be870bed3c099e238e91308 *R/node.R
 3c8a47c204c76f69ecba21266b72d231 *R/node_actives.R
 fee4101e3f4cb984dbf3d55d5100b1f8 *R/node_conversion.R
-f5713e4536838732956c36bc24088d60 *R/node_conversion_ape.R
+7c119b1a3fa0810750989cdf49007a38 *R/node_conversion_ape.R
 c19795fd610d74b6e9bd6002507dee1f *R/node_conversion_dataframe.R
 21fd2dbd7561c43795dfaee215623bfd *R/node_conversion_dendrogram.R
 641c85b57d3c113f8c8246f45910cf7b *R/node_conversion_igraph.R
@@ -15,7 +15,7 @@ c19795fd610d74b6e9bd6002507dee1f *R/node_conversion_dataframe.R
 cba21a0254877919803370ed9094b128 *R/node_methods.R
 933ffe2e6807ec563011453e59736b06 *R/node_methods_sideeffect.R
 75796e6f79f647d20fd13a67766d830e *R/node_methods_traversal.R
-26cf0fa57195b1fe53222eb63d380d81 *R/node_plot.R
+f4162e2fed2597d8977100ad35e71c4e *R/node_plot.R
 39ef226589d0ff71b0984c4a0f7d156f *R/release.R
 373e2446c703b3f91d20c71d217a3930 *R/util.R
 3139dbc77a7254b46b0dbf1a5d18d338 *build/vignette.rds
@@ -23,10 +23,10 @@ cba21a0254877919803370ed9094b128 *R/node_methods.R
 f7e3131a6c03723834406ea21ae7a5d7 *data/mushroom.rda
 244d94d77597494d01882d00ec41b86e *inst/doc/applications.R
 51cbf4e4ac87485956d8f361f3d264f0 *inst/doc/applications.Rmd
-452892b4a491d0448112a91338c4909a *inst/doc/applications.html
+2950e54e5d6239070b270d8762fb7274 *inst/doc/applications.html
 4670f387b2a2805c5489572cb6bff133 *inst/doc/data.tree.R
 cb7ef6261ca970b49d0c0f5a9c6925d1 *inst/doc/data.tree.Rmd
-9edf8a78dd8ac665eb8f6b3ec55e133c *inst/doc/data.tree.html
+8fe916340e237a3047eb31ed651fa837 *inst/doc/data.tree.html
 dec6673d9ed52b6f755b3d7b11207b3a *inst/extdata/flare.json
 7de045702f5efd67847cbd7dacab0cca *inst/extdata/jennylind.yaml
 406b4e2e9f2ab874871a3272ae533152 *inst/extdata/portfolio.csv
@@ -66,7 +66,7 @@ ff2d182a3d3ea42ca43c68bcd16ca760 *man/as.Node.data.frame.Rd
 7916bdc3be3aa29919bb30efda08e828 *man/as.Node.dendrogram.Rd
 7728814ac919748bf0d7916ace11cc4e *man/as.Node.list.Rd
 19e74e3081088b3713db6af8d9331aab *man/as.Node.party.Rd
-7c4eaf7362a40477acc5aaee21d5ddb6 *man/as.Node.phylo.Rd
+3700b6f98f6f09c443b80ac8b61b14a2 *man/as.Node.phylo.Rd
 17a8554590a8d406b3d1c319715260df *man/as.data.frame.Node.Rd
 35b4645d5bf176dd63a311fed35df29d *man/as.dendrogram.Node.Rd
 da27df7d8f01d0b8e6b7ff6d14970176 *man/as.igraph.Node.Rd
@@ -81,7 +81,7 @@ a640db4ad6ff51767b93ca4f328696f6 *man/isRoot.Rd
 e3a06a45ed8f36c5f958310c0515e2a2 *man/mushroom.Rd
 97dedc6f802a856cef6437a2bccce852 *man/print.Node.Rd
 40867014caeb13b882c8a1d4713ce05c *tests/testthat.R
-88bfdde42c6a16b1b15a71996cd3e405 *tests/testthat/test-draw.R
+4864547e8a977799db3f8fd1a5b453a4 *tests/testthat/test-draw.R
 076db2ea0f90719ab78cf2f79fc54304 *tests/testthat/test-treeConstruction.R
 b10a3d6f9331724c00fb939fa040e56c *tests/testthat/test-treeConversion.R
 478c0488f3e61082b7d3367f278ebe00 *tests/testthat/test-treeConversionApe.R
