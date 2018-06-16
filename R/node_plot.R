@@ -9,7 +9,7 @@
 #'@export
 plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL, output = "graph") {
   graph <- ToDiagrammeRGraph(x, direction, pruneFun)
-  render_graph(graph, output = output)
+  render_graph(graph, output = output, ...)
 }
 
 
@@ -97,6 +97,10 @@ plot.Node <- function(x, ..., direction = c("climb", "descend"), pruneFun = NULL
 #' Do(acme$leaves, function(node) SetNodeStyle(node, shape = "egg"))
 #' plot(acme)
 #' 
+#' #print p as label, where available:
+#' SetNodeStyle(acme, label = function(node) node$p)
+#' plot(acme)
+#' 
 #' @export
 ToDiagrammeRGraph <- function(root, direction = c("climb", "descend"), pruneFun = NULL) {
   #get unique node styles defined on tree
@@ -109,7 +113,7 @@ ToDiagrammeRGraph <- function(root, direction = c("climb", "descend"), pruneFun 
   Set(tr, `.id` = 1:length(tr))
   
   #create nodes df
-  myargs <- NULL
+  myargs <- list()
   if(!"label" %in% ns) ns <- c(ns, "label")
   for (style in ns) {
     myargs[[style]] <- Get(tr, function(x) {
@@ -136,7 +140,9 @@ ToDiagrammeRGraph <- function(root, direction = c("climb", "descend"), pruneFun 
   
   
   edges <- do.call("ToDataFrameNetwork", c(root, from = function(node) node$parent$`.id`, to = ".id", myargs, direction = list(direction), pruneFun = pruneFun))[,-(1:2)]
-  edges <- do.call(create_edge_df, as.list(edges))
+  if (nrow(edges) > 0) {
+    edges <- do.call(create_edge_df, as.list(edges))
+  }
   
   graph <- create_graph(nodes, edges, attr_theme = NULL)
   

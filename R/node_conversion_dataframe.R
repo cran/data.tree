@@ -181,7 +181,7 @@ ToDataFrameNetwork <- function(x,
 
   df <- cbind(df, df2)
   df <- df[-1,]
-  rownames(df) <- 1:dim(df)[1]
+  rownames(df) <- seq_len(nrow(df))
   return (df)
 }
 
@@ -301,6 +301,11 @@ FromDataFrameTable <- function(table,
                                na.rm = TRUE,
                                check = c("check", "no-warn", "no-check")
                                ) {
+  
+  if (!is(table, "data.frame")) stop("table must be a data.frame")
+  #make sure tibble etc. work (#115)
+  table <- as.data.frame(table)
+  
   table[[pathName]] <- as.character(table[[pathName]])
   root <- NULL
   mycols <- names(table)[ !(names(table) %in% c(NODE_RESERVED_NAMES_CONST, pathName)) ]
@@ -377,6 +382,8 @@ FromDataFrameTable <- function(table,
 FromDataFrameNetwork <- function(network, check = c("check", "no-warn", "no-check")) {
 
   if (!is(network, "data.frame")) stop("network must be a data.frame")
+  #make sure tibble etc. work (#115)
+  network <- as.data.frame(network)
   if (dim(network)[2] < 2) stop("network must hold the relationships in the first two columns")
 
   if (length(unique(network[ , 1])) > length(unique(network[ , 2]))) {
