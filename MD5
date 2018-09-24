@@ -1,6 +1,6 @@
-61623c3522ab7baa8d6b2e7c056cfa7b *DESCRIPTION
-826e3f26129c8ed506285c7a054520b4 *NAMESPACE
-605b585df9150492c5da8fc5036222e3 *NEWS
+367a86f4d76d7b8c23b5763a07f18008 *DESCRIPTION
+b09c02c1146326204d533d8ded9df2dd *NAMESPACE
+8542a5011ca7615efea6978bf3650bd3 *NEWS
 c0663c95068abd8ef3215a1155835019 *R/data.tree.R
 4f1f730ea09b49775549163579484ed5 *R/data_doc.R
 c4c86cefc27428f388f43cc5f92c0f9a *R/node.R
@@ -23,10 +23,10 @@ bdcf82ebf11ae437995cdaf5a10bbabe *build/vignette.rds
 f7e3131a6c03723834406ea21ae7a5d7 *data/mushroom.rda
 244d94d77597494d01882d00ec41b86e *inst/doc/applications.R
 51cbf4e4ac87485956d8f361f3d264f0 *inst/doc/applications.Rmd
-39aa40d47770426448502044179a17a2 *inst/doc/applications.html
+eaa8ef2740af87b2ef4e42a90c6d2366 *inst/doc/applications.html
 90bde0d56b93b3784d101cd57e0dfba8 *inst/doc/data.tree.R
 18aadbf5a325faed734ccc0c15cc2dd7 *inst/doc/data.tree.Rmd
-f348cac6d9a0ca38a0114bcfce9f59e5 *inst/doc/data.tree.html
+9de827f19561b9a0dc84bdf7ce6756ad *inst/doc/data.tree.html
 dec6673d9ed52b6f755b3d7b11207b3a *inst/extdata/flare.json
 7de045702f5efd67847cbd7dacab0cca *inst/extdata/jennylind.yaml
 406b4e2e9f2ab874871a3272ae533152 *inst/extdata/portfolio.csv
