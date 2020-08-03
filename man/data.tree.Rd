@@ -3,7 +3,6 @@
 \docType{package}
 \name{data.tree}
 \alias{data.tree}
-\alias{data.tree-package}
 \title{data.tree: Hierarchical Data Structures}
 \description{
 \code{data.tree} is to hierarchical data what \code{data.frame} is to tabular data: An extensible, general purpose structure to store, manipulate, 
@@ -79,7 +78,7 @@ applications, see \code{vignette("applications", package='data.tree')}
 \examples{
 data(acme)
 print(acme)
-acme$fieldsAll
+acme$attributesAll
 acme$count
 acme$totalCount
 acme$isRoot
@@ -89,7 +88,7 @@ print(acme, "p", "cost")
 outsource <- acme$IT$Outsource
 class(outsource)
 print(outsource)
-outsource$fields
+outsource$attributes
 outsource$isLeaf
 outsource$level
 outsource$path

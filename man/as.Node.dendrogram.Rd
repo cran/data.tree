@@ -4,9 +4,13 @@
 \alias{as.Node.dendrogram}
 \title{Convert a \code{\link{dendrogram}} to a data.tree \code{Node}}
 \usage{
-\method{as.Node}{dendrogram}(x, name = "Root",
-  heightName = "plotHeight", check = c("check", "no-warn", "no-check"),
-  ...)
+\method{as.Node}{dendrogram}(
+  x,
+  name = "Root",
+  heightName = "plotHeight",
+  check = c("check", "no-warn", "no-check"),
+  ...
+)
 }
 \arguments{
 \item{x}{The dendrogram}
@@ -34,15 +38,18 @@ Convert a \code{\link{dendrogram}} to a data.tree \code{Node}
 hc <- hclust(dist(USArrests), "ave")
 dend1 <- as.dendrogram(hc)
 tree1 <- as.Node(dend1)
-tree1$fieldsAll
+tree1$attributesAll
 tree1$totalCount
 tree1$leafCount
 tree1$height
   
 }
 \seealso{
-Other as.Node: \code{\link{as.Node.data.frame}},
-  \code{\link{as.Node.list}}, \code{\link{as.Node.phylo}},
-  \code{\link{as.Node.rpart}}, \code{\link{as.Node}}
+Other as.Node: 
+\code{\link{as.Node.data.frame}()},
+\code{\link{as.Node.list}()},
+\code{\link{as.Node.phylo}()},
+\code{\link{as.Node.rpart}()},
+\code{\link{as.Node}()}
 }
 \concept{as.Node}

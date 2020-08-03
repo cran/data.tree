@@ -6,13 +6,24 @@
 \alias{FromDataFrameNetwork}
 \title{Convert a \code{data.frame} to a \code{data.tree} structure}
 \usage{
-\method{as.Node}{data.frame}(x, ..., mode = c("table", "network"),
-  pathName = "pathString", pathDelimiter = "/", colLevels = NULL,
-  na.rm = TRUE)
+\method{as.Node}{data.frame}(
+  x,
+  ...,
+  mode = c("table", "network"),
+  pathName = "pathString",
+  pathDelimiter = "/",
+  colLevels = NULL,
+  na.rm = TRUE
+)
 
-FromDataFrameTable(table, pathName = "pathString", pathDelimiter = "/",
-  colLevels = NULL, na.rm = TRUE, check = c("check", "no-warn",
-  "no-check"))
+FromDataFrameTable(
+  table,
+  pathName = "pathString",
+  pathDelimiter = "/",
+  colLevels = NULL,
+  na.rm = TRUE,
+  check = c("check", "no-warn", "no-check")
+)
 
 FromDataFrameNetwork(network, check = c("check", "no-warn", "no-check"))
 }
@@ -47,7 +58,7 @@ it must adhere to the following requirements:
 \itemize{
  \item{It must contain as many rows as there are nodes (excluding the root, there is no row for the root)}
  \item{Its first and second columns contain the network relationships. This can be either climbing (from parent to children) or descending (from child to parent)}
- \item{Its subsequent columns contain the attributes to be set as fields on the nodes}
+ \item{Its subsequent columns contain the attributes to be set on the nodes}
  \item{It must contain a single root}
  \item{There are no cycles in the network}
 }}
@@ -90,8 +101,11 @@ print(xN, "p", "cost")
 \seealso{
 \code{\link{as.data.frame.Node}}
 
-Other as.Node: \code{\link{as.Node.dendrogram}},
-  \code{\link{as.Node.list}}, \code{\link{as.Node.phylo}},
-  \code{\link{as.Node.rpart}}, \code{\link{as.Node}}
+Other as.Node: 
+\code{\link{as.Node.dendrogram}()},
+\code{\link{as.Node.list}()},
+\code{\link{as.Node.phylo}()},
+\code{\link{as.Node.rpart}()},
+\code{\link{as.Node}()}
 }
 \concept{as.Node}

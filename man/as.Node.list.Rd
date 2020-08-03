@@ -6,16 +6,30 @@
 \alias{FromListSimple}
 \title{Convert a nested \code{list} structure to a \code{data.tree} structure}
 \usage{
-\method{as.Node}{list}(x, mode = c("simple", "explicit"),
-  nameName = "name", childrenName = "children", nodeName = NULL,
-  check = c("check", "no-warn", "no-check"), ...)
+\method{as.Node}{list}(
+  x,
+  mode = c("simple", "explicit"),
+  nameName = "name",
+  childrenName = "children",
+  nodeName = NULL,
+  check = c("check", "no-warn", "no-check"),
+  ...
+)
 
-FromListExplicit(explicitList, nameName = "name",
-  childrenName = "children", nodeName = NULL, check = c("check",
-  "no-warn", "no-check"))
+FromListExplicit(
+  explicitList,
+  nameName = "name",
+  childrenName = "children",
+  nodeName = NULL,
+  check = c("check", "no-warn", "no-check")
+)
 
-FromListSimple(simpleList, nameName = "name", nodeName = NULL,
-  check = c("check", "no-warn", "no-check"))
+FromListSimple(
+  simpleList,
+  nameName = "name",
+  nodeName = NULL,
+  check = c("check", "no-warn", "no-check")
+)
 }
 \arguments{
 \item{x}{The \code{list} to be converted.}
@@ -42,7 +56,7 @@ the root with mode explicit and named lists.}
 
 \item{explicitList}{A \code{list} in which children are in a separate nested list called \code{childrenName}.}
 
-\item{simpleList}{A \code{list} in which children are stored as nested list alongside other fields. Any list is
+\item{simpleList}{A \code{list} in which children are stored as nested list alongside other attributes. Any list is
 interpreted as a child \code{Node}}
 }
 \description{
@@ -93,9 +107,11 @@ FromListSimple(kingJosephs, nodeName = "Joseph I")
   
 }
 \seealso{
-Other as.Node: \code{\link{as.Node.data.frame}},
-  \code{\link{as.Node.dendrogram}},
-  \code{\link{as.Node.phylo}}, \code{\link{as.Node.rpart}},
-  \code{\link{as.Node}}
+Other as.Node: 
+\code{\link{as.Node.data.frame}()},
+\code{\link{as.Node.dendrogram}()},
+\code{\link{as.Node.phylo}()},
+\code{\link{as.Node.rpart}()},
+\code{\link{as.Node}()}
 }
 \concept{as.Node}

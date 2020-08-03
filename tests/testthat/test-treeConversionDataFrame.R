@@ -61,6 +61,27 @@ test_that("FromDataFrameTable reserved words", {
 })
 
 
+test_that("FromDataFrameNetwork reserved words", {
+  
+  parent <- c("a", "a", "b", "c", "c")
+  child <- c("b", "f", "c", "d", "e")
+  value <- c(0:4)
+  
+  network_df <- data.frame(parent, child, value, stringsAsFactors = FALSE)
+  
+  #no warn
+  expect_warning(tree <- FromDataFrameNetwork(network_df), regexp = NA)
+  
+  #reserved words
+  parent <- c("a", "a", "b", "c", "c")
+  child <- c("b", "f", "c", "d", "e")
+  name <- c(0:4)
+  network_df <- data.frame(parent, child, name, stringsAsFactors = FALSE)
+  expect_that(tree <- FromDataFrameNetwork(network_df), gives_warning())
+  expect_warning(tree <- FromDataFrameNetwork(network_df, check = "no-warn"), NA)
+})
+
+
 test_that("as.data.frame.Node", {
   data(acme)
   acmedf <- as.data.frame(acme, 
@@ -76,7 +97,7 @@ test_that("as.data.frame.Node", {
   expect_equal(acmedf$sg, acmedf$sg)
 })
 
-test_that("as.data.frame.Node list fields", {
+test_that("as.data.frame.Node list attributes", {
   data(acme)
   acme$Set(data      = list(list(list(a = 1, b = "a"))), filterFun = isLeaf)
   acme$Set(data      = list(list(list(b = "c"))), 
@@ -125,7 +146,7 @@ test_that("ToDataFrame sub-tree", {
   it <- acme$Climb("IT")
   df <- ToDataFrameTree(it)
   expect_equal(dim(df), c(4, 1))
-  expect_equal(str_sub(df[1, 1], 1, 2), 'IT')  
+  expect_equal(stri_sub(df[1, 1], 1, 2), 'IT')  
 })
 
 
