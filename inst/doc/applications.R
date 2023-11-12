@@ -319,7 +319,7 @@ jl$Do(function(x) SetEdgeStyle(x, color = "red", inherit = FALSE),
 
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  SetGraphStyle(jl, rankdir = "LR")
 #  plot(jl)
 #  
@@ -350,7 +350,7 @@ flare_df <- ToDataFrameTable(flareTree,
 head(flare_df)
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  
 #  devtools::install_github("jcheng5/bubbles@6724e43f5e")
 #  library(scales)
@@ -392,7 +392,7 @@ fileStructure$leafCount / (fileStructure$totalCount - fileStructure$leafCount)
 print(fileStructure, "mode", "size", limit = 25)
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  
 #  #This requires listviewer, which is available only on github
 #  devtools::install_github("timelyportfolio/listviewer")
@@ -501,7 +501,7 @@ system.time(x <- sapply(1:100, function(x) FreqLastGen(GenerateChildrenTree())))
 ## -----------------------------------------------------------------------------
 hist(x, probability = TRUE, main = "Frequency of feature in last generation")
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  library(foreach)
 #  library(doParallel)
 #  registerDoParallel(makeCluster(3))
@@ -510,7 +510,7 @@ hist(x, probability = TRUE, main = "Frequency of feature in last generation")
 #  system.time(x <- foreach (i = 1:100, .packages = "data.tree") %dopar% FreqLastGen(GenerateChildrenTree()))
 #  stopImplicitCluster()
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 
 print(c(user = 0.07, system = 0.02, elapsed = 1.40))
 
@@ -575,37 +575,37 @@ HasWon <- function(node) {
 }
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  system.time(for (child in ttt$children) AddPossibleMoves(child))
 
-## ---- echo= FALSE-------------------------------------------------------------
+## ----echo= FALSE--------------------------------------------------------------
 c(user = 345.645, system = 3.245, elapsed = 346.445)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  ttt$leafCount
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 89796
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  ttt$totalCount
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 203716
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  mean(ttt$Get(function(x) x$level - 1, filterFun = isLeaf))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 8.400775
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  ttt$averageBranchingFactor
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 1.788229
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  
 #  winnerOne <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 1)
 #  winnerTwo <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 2)
@@ -613,7 +613,7 @@ c(user = 345.645, system = 3.245, elapsed = 346.445)
 #  
 #  c(winnerOne = length(winnerOne), winnerTwo = length(winnerTwo), ties = length(ties))
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 c(winnerOne = 39588, winnerTwo = 21408, ties = 28800)
 
 ## -----------------------------------------------------------------------------
@@ -639,18 +639,18 @@ PrintBoard <- function(node) {
 }
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  
 #  PrintBoard(ties[[1]])
 #  
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 mt <- matrix(c("O2", "X3", "O4", "X5", "O6", "X7", "X1", "O8", "X9"), nrow = 3, ncol = 3, byrow = TRUE)
 rownames(mt) <- letters[1:3]
 colnames(mt) <- as.character(1:3)
 mt
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  
 #  
 #  AnalyseTicTacToe <- function(subtree) {
@@ -678,14 +678,14 @@ mt
 #                  .packages = "data.tree") %dopar% AnalyseTicTacToe(child)
 #  )
 
-## ---- echo= FALSE-------------------------------------------------------------
+## ----echo= FALSE--------------------------------------------------------------
 c(user = 0.05, system = 0.04, elapsed = 116.86)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  stopImplicitCluster()
 #  # 4. aggregate results
 #  rowSums(sapply(x, c))
 
-## ---- echo=FALSE--------------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 c(winnerOne = 39588, winnerTwo = 21408, ties = 28800)
 

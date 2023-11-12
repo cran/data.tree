@@ -71,6 +71,27 @@ osNode <- as.Node(osList)
 print(osNode, "users")
 
 ## -----------------------------------------------------------------------------
+library(yaml)
+yaml <- "
+name: OS Students 2014/15
+OS X:
+  Yosemite:
+  Leopard:
+Linux:
+  Debian:
+  Ubuntu:
+Windows:
+  W7:
+  W8:
+  W10:
+"
+
+osList <- yaml.load(yaml)
+osNode <- as.Node(osList, interpretNullAsList = TRUE)
+osNode$printFormatters <- list(h = "\u2500" , v = "\u2502", l = "\u2514", j = "\u251C")
+print(osNode, "users")
+
+## -----------------------------------------------------------------------------
 print(population, limit = 15)
 population$isRoot
 population$height
@@ -179,10 +200,10 @@ data.frame(cost = acme$Get("cost", format = function(x) FormatFixedDecimal(x, 2)
            
 
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  plot(acme)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  SetGraphStyle(acme, rankdir = "TB")
 #  SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2)
 #  SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow",
@@ -190,12 +211,12 @@ data.frame(cost = acme$Get("cost", format = function(x) FormatFixedDecimal(x, 2)
 #  SetNodeStyle(acme$IT, fillcolor = "LightBlue", penwidth = "5px")
 #  plot(acme)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  SetNodeStyle(acme$Accounting, inherit = FALSE, fillcolor = "Thistle",
 #               fontcolor = "Firebrick", tooltip = "This is the accounting department")
 #  plot(acme)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  Do(acme$leaves, function(node) SetNodeStyle(node, shape = "egg"))
 #  plot(acme)
 
@@ -231,7 +252,7 @@ radialNetwork( useRtreeList)
 acmedf <- as.data.frame(acme)
 as.data.frame(acme$IT)
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  ToDataFrameTree(acme)
 
 ## -----------------------------------------------------------------------------
@@ -359,7 +380,7 @@ Get(traversal, "extension")
 Aggregate(node = acme, attribute = "cost", aggFun = sum)
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  acme$Get(Aggregate, "cost", sum)
 
 ## -----------------------------------------------------------------------------
@@ -400,47 +421,47 @@ acme$Do(function(x) x$cost <- Aggregate(x, "cost", sum))
 Prune(acme, function(x) x$cost > 700000)
 print(acme, "cost")
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(tree <- CreateRegularTree(6, 6))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 2.499, system = 0.009, elapsed = 2.506)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(tree <- Clone(tree))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 3.704, system = 0.023, elapsed = 3.726)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(traversal <- Traverse(tree))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.096, system = 0.000, elapsed = 0.097)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(Set(traversal, id = 1:tree$totalCount))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.205, system = 0.000, elapsed = 0.204)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(ids <- Get(traversal, "id"))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.569, system = 0.000, elapsed = 0.569)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  leaves <- Traverse(tree, filterFun = isLeaf)
 #  Set(leaves, leafId = 1:length(leaves))
 #  system.time(Get(traversal, function(node) Aggregate(node, "leafId", max)))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 1.418, system = 0.000, elapsed = 1.417)
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  system.time(tree$Get(function(node) Aggregate(tree, "leafId", max, "maxLeafId"), traversal = "post-order"))
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.69, system = 0.00, elapsed = 0.69)
 

@@ -1,14 +1,9 @@
 context("tree conversion rpart")
 
-check_rpart_installed <- function() {
-  if (!suppressWarnings(require(rpart))) {
-    skip("library 'rpart' not available")
-  }
-}
-
 test_that("Conversion from rpart", {
-  check_rpart_installed()
-  fit  <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+  skip_if_not_installed("rpart")
+
+  fit  <- rpart::rpart(Kyphosis ~ Age + Number + Start, data = rpart::kyphosis)
   tree <- as.Node(fit)
   expect_equal(tree$totalCount,
                NROW(fit$frame))
