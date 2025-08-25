@@ -22,7 +22,8 @@ FromDataFrameTable(
   pathDelimiter = "/",
   colLevels = NULL,
   na.rm = TRUE,
-  check = c("check", "no-warn", "no-check")
+  check = c("check", "no-warn", "no-check"),
+  suffix = "_attr"
 )
 
 FromDataFrameNetwork(network, check = c("check", "no-warn", "no-check"))
@@ -52,6 +53,8 @@ describing the path of each row.}
  \item{\code{"no-warn"}: if the name conformance should be checked, but no warnings should be printed in case of non-conformance (if you expect non-conformance)}
  \item{\code{"no-check" or FALSE}: if the name conformance should not be checked; use this if performance is critical. However, in case of non-conformance, expect cryptic follow-up errors}
 }}
+
+\item{suffix}{optional suffix added to the column name in case the column name is the same as a path element. Defaults to '_attr'}
 
 \item{network}{A \code{data.frame} in network format, i.e.
 it must adhere to the following requirements:

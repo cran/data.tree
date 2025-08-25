@@ -201,24 +201,24 @@ data.frame(cost = acme$Get("cost", format = function(x) FormatFixedDecimal(x, 2)
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  plot(acme)
+# plot(acme)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  SetGraphStyle(acme, rankdir = "TB")
-#  SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2)
-#  SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow",
-#              fontname = "helvetica", tooltip = GetDefaultTooltip)
-#  SetNodeStyle(acme$IT, fillcolor = "LightBlue", penwidth = "5px")
-#  plot(acme)
+# SetGraphStyle(acme, rankdir = "TB")
+# SetEdgeStyle(acme, arrowhead = "vee", color = "grey35", penwidth = 2)
+# SetNodeStyle(acme, style = "filled,rounded", shape = "box", fillcolor = "GreenYellow",
+#             fontname = "helvetica", tooltip = GetDefaultTooltip)
+# SetNodeStyle(acme$IT, fillcolor = "LightBlue", penwidth = "5px")
+# plot(acme)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  SetNodeStyle(acme$Accounting, inherit = FALSE, fillcolor = "Thistle",
-#               fontcolor = "Firebrick", tooltip = "This is the accounting department")
-#  plot(acme)
+# SetNodeStyle(acme$Accounting, inherit = FALSE, fillcolor = "Thistle",
+#              fontcolor = "Firebrick", tooltip = "This is the accounting department")
+# plot(acme)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  Do(acme$leaves, function(node) SetNodeStyle(node, shape = "egg"))
-#  plot(acme)
+# Do(acme$leaves, function(node) SetNodeStyle(node, shape = "egg"))
+# plot(acme)
 
 ## -----------------------------------------------------------------------------
 plot(as.dendrogram(CreateRandomTree(nodes = 20)), center = TRUE)
@@ -253,7 +253,7 @@ acmedf <- as.data.frame(acme)
 as.data.frame(acme$IT)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  ToDataFrameTree(acme)
+# ToDataFrameTree(acme)
 
 ## -----------------------------------------------------------------------------
 ToDataFrameTree(acme, "level", "cost")
@@ -381,7 +381,7 @@ Aggregate(node = acme, attribute = "cost", aggFun = sum)
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  acme$Get(Aggregate, "cost", sum)
+# acme$Get(Aggregate, "cost", sum)
 
 ## -----------------------------------------------------------------------------
 acme$Do(function(node) node$cost <- Aggregate(node, attribute = "cost", aggFun = sum), traversal = "post-order")
@@ -422,45 +422,45 @@ Prune(acme, function(x) x$cost > 700000)
 print(acme, "cost")
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(tree <- CreateRegularTree(6, 6))
+# system.time(tree <- CreateRegularTree(6, 6))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 2.499, system = 0.009, elapsed = 2.506)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(tree <- Clone(tree))
+# system.time(tree <- Clone(tree))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 3.704, system = 0.023, elapsed = 3.726)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(traversal <- Traverse(tree))
+# system.time(traversal <- Traverse(tree))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.096, system = 0.000, elapsed = 0.097)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(Set(traversal, id = 1:tree$totalCount))
+# system.time(Set(traversal, id = 1:tree$totalCount))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.205, system = 0.000, elapsed = 0.204)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(ids <- Get(traversal, "id"))
+# system.time(ids <- Get(traversal, "id"))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.569, system = 0.000, elapsed = 0.569)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  leaves <- Traverse(tree, filterFun = isLeaf)
-#  Set(leaves, leafId = 1:length(leaves))
-#  system.time(Get(traversal, function(node) Aggregate(node, "leafId", max)))
+# leaves <- Traverse(tree, filterFun = isLeaf)
+# Set(leaves, leafId = 1:length(leaves))
+# system.time(Get(traversal, function(node) Aggregate(node, "leafId", max)))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 1.418, system = 0.000, elapsed = 1.417)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  system.time(tree$Get(function(node) Aggregate(tree, "leafId", max, "maxLeafId"), traversal = "post-order"))
+# system.time(tree$Get(function(node) Aggregate(tree, "leafId", max, "maxLeafId"), traversal = "post-order"))
 
 ## ----echo = FALSE-------------------------------------------------------------
 c(user = 0.69, system = 0.00, elapsed = 0.69)

@@ -320,9 +320,9 @@ jl$Do(function(x) SetEdgeStyle(x, color = "red", inherit = FALSE),
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  SetGraphStyle(jl, rankdir = "LR")
-#  plot(jl)
-#  
+# SetGraphStyle(jl, rankdir = "LR")
+# plot(jl)
+# 
 
 ## -----------------------------------------------------------------------------
 fileName <- system.file("extdata", "flare.json", package="data.tree")
@@ -351,22 +351,22 @@ head(flare_df)
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  
-#  devtools::install_github("jcheng5/bubbles@6724e43f5e")
-#  library(scales)
-#  library(bubbles)
-#  library(RColorBrewer)
-#  bubbles(
-#    flare_df$size,
-#    substr(flare_df$packageName, 1, 2),
-#    tooltip = flare_df$packageName,
-#    color = col_factor(
-#      brewer.pal(9,"Set1"),
-#      factor(flare_df$className)
-#    )(flare_df$className),
-#    height = 800,
-#    width = 800
-#  )
+# 
+# devtools::install_github("jcheng5/bubbles@6724e43f5e")
+# library(scales)
+# library(bubbles)
+# library(RColorBrewer)
+# bubbles(
+#   flare_df$size,
+#   substr(flare_df$packageName, 1, 2),
+#   tooltip = flare_df$packageName,
+#   color = col_factor(
+#     brewer.pal(9,"Set1"),
+#     factor(flare_df$className)
+#   )(flare_df$className),
+#   height = 800,
+#   width = 800
+# )
 
 ## -----------------------------------------------------------------------------
 path <- ".."
@@ -393,15 +393,15 @@ print(fileStructure, "mode", "size", limit = 25)
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  
-#  #This requires listviewer, which is available only on github
-#  devtools::install_github("timelyportfolio/listviewer")
-#  
-#  library(listviewer)
-#  
-#  l <- ToListSimple(fileStructure)
-#  jsonedit(l)
-#  
+# 
+# #This requires listviewer, which is available only on github
+# devtools::install_github("timelyportfolio/listviewer")
+# 
+# library(listviewer)
+# 
+# l <- ToListSimple(fileStructure)
+# jsonedit(l)
+# 
 
 ## -----------------------------------------------------------------------------
 
@@ -502,13 +502,13 @@ system.time(x <- sapply(1:100, function(x) FreqLastGen(GenerateChildrenTree())))
 hist(x, probability = TRUE, main = "Frequency of feature in last generation")
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  library(foreach)
-#  library(doParallel)
-#  registerDoParallel(makeCluster(3))
-#  #On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
-#  
-#  system.time(x <- foreach (i = 1:100, .packages = "data.tree") %dopar% FreqLastGen(GenerateChildrenTree()))
-#  stopImplicitCluster()
+# library(foreach)
+# library(doParallel)
+# registerDoParallel(makeCluster(3))
+# #On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
+# 
+# system.time(x <- foreach (i = 1:100, .packages = "data.tree") %dopar% FreqLastGen(GenerateChildrenTree()))
+# stopImplicitCluster()
 
 ## ----echo = FALSE-------------------------------------------------------------
 
@@ -576,42 +576,42 @@ HasWon <- function(node) {
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  system.time(for (child in ttt$children) AddPossibleMoves(child))
+# system.time(for (child in ttt$children) AddPossibleMoves(child))
 
 ## ----echo= FALSE--------------------------------------------------------------
 c(user = 345.645, system = 3.245, elapsed = 346.445)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ttt$leafCount
+# ttt$leafCount
 
 ## ----echo = FALSE-------------------------------------------------------------
 89796
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ttt$totalCount
+# ttt$totalCount
 
 ## ----echo = FALSE-------------------------------------------------------------
 203716
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  mean(ttt$Get(function(x) x$level - 1, filterFun = isLeaf))
+# mean(ttt$Get(function(x) x$level - 1, filterFun = isLeaf))
 
 ## ----echo = FALSE-------------------------------------------------------------
 8.400775
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  ttt$averageBranchingFactor
+# ttt$averageBranchingFactor
 
 ## ----echo = FALSE-------------------------------------------------------------
 1.788229
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  
-#  winnerOne <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 1)
-#  winnerTwo <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 2)
-#  ties <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 0)
-#  
-#  c(winnerOne = length(winnerOne), winnerTwo = length(winnerTwo), ties = length(ties))
+# 
+# winnerOne <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 1)
+# winnerTwo <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 2)
+# ties <- Traverse(ttt, filterFun = function(x) x$isLeaf && x$result == 0)
+# 
+# c(winnerOne = length(winnerOne), winnerTwo = length(winnerTwo), ties = length(ties))
 
 ## ----echo=FALSE---------------------------------------------------------------
 c(winnerOne = 39588, winnerTwo = 21408, ties = 28800)
@@ -640,9 +640,9 @@ PrintBoard <- function(node) {
 
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  
-#  PrintBoard(ties[[1]])
-#  
+# 
+# PrintBoard(ties[[1]])
+# 
 
 ## ----echo = FALSE-------------------------------------------------------------
 mt <- matrix(c("O2", "X3", "O4", "X5", "O6", "X7", "X1", "O8", "X9"), nrow = 3, ncol = 3, byrow = TRUE)
@@ -651,40 +651,40 @@ colnames(mt) <- as.character(1:3)
 mt
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  
-#  
-#  AnalyseTicTacToe <- function(subtree) {
-#    # 1. create sub-tree
-#    AddPossibleMoves(subtree)
-#    # 2. run the analysis
-#    winnerOne <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 1)
-#    winnerTwo <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 2)
-#    ties <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 0)
-#  
-#    res <- c(winnerOne = length(winnerOne),
-#             winnerTwo = length(winnerTwo),
-#             ties = length(ties))
-#    # 3. return the result
-#    return(res)
-#  }
-#  
-#  
-#  library(foreach)
-#  library(doParallel)
-#  registerDoParallel(makeCluster(3))
-#  #On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
-#  system.time(
-#    x <- foreach (child = ttt$children,
-#                  .packages = "data.tree") %dopar% AnalyseTicTacToe(child)
-#  )
+# 
+# 
+# AnalyseTicTacToe <- function(subtree) {
+#   # 1. create sub-tree
+#   AddPossibleMoves(subtree)
+#   # 2. run the analysis
+#   winnerOne <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 1)
+#   winnerTwo <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 2)
+#   ties <- Traverse(subtree, filterFun = function(x) x$isLeaf && x$result == 0)
+# 
+#   res <- c(winnerOne = length(winnerOne),
+#            winnerTwo = length(winnerTwo),
+#            ties = length(ties))
+#   # 3. return the result
+#   return(res)
+# }
+# 
+# 
+# library(foreach)
+# library(doParallel)
+# registerDoParallel(makeCluster(3))
+# #On Linux, there are other alternatives, e.g.: library(doMC);  registerDoMC(3)
+# system.time(
+#   x <- foreach (child = ttt$children,
+#                 .packages = "data.tree") %dopar% AnalyseTicTacToe(child)
+# )
 
 ## ----echo= FALSE--------------------------------------------------------------
 c(user = 0.05, system = 0.04, elapsed = 116.86)
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  stopImplicitCluster()
-#  # 4. aggregate results
-#  rowSums(sapply(x, c))
+# stopImplicitCluster()
+# # 4. aggregate results
+# rowSums(sapply(x, c))
 
 ## ----echo=FALSE---------------------------------------------------------------
 c(winnerOne = 39588, winnerTwo = 21408, ties = 28800)

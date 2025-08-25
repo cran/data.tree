@@ -1,8 +1,9 @@
 Package: data.tree
 Type: Package
 Title: General Purpose Hierarchical Data Structure
-Version: 1.1.0
-Date: 2023-11-11
+Version: 1.2.0
+Language: en-US
+Date: 2025-08-06
 Authors@R: c(
       person(
         "Russ", "Hyde",
@@ -65,10 +66,10 @@ License: GPL (>= 2)
 URL: https://github.com/gluc/data.tree
 BugReports: https://github.com/gluc/data.tree/issues
 Depends: R (>= 3.5)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2023-11-12 14:00:42 UTC; ChristophGlur
+Packaged: 2025-08-25 09:55:30 UTC; ChristophGlur
 Author: Russ Hyde [ctb] (improve dependencies),
   Chris Hammill [ctb] (improve getting),
   Facundo Munoz [ctb] (improve list conversion),
@@ -80,4 +81,4 @@ Author: Russ Hyde [ctb] (improve dependencies),
   Christoph Glur [aut, cre] (R interface)
 Maintainer: Christoph Glur <christoph.glur@powerpartners.pro>
 Repository: CRAN
-Date/Publication: 2023-11-12 20:23:21 UTC
+Date/Publication: 2025-08-25 11:00:02 UTC
